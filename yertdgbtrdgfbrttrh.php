@@ -69,52 +69,90 @@
 			height: 25px;
 		}
 
-		#results-table,
+		#results-table
 		{
 			padding: 0;
 			margin: auto;
 			width: 1000px;
 		}
 
+		#results-table, #results-table td, #results-table th
+		{
+			border: 1px solid grey;
+			border-collapse: collapse;
+		}
+
+		#results-table tr td img
+		{
+			width: 65px;
+		}
+
+		#error-bar
+		{
+			text-align: center;
+			margin: auto;
+			width: 1000px;
+			background-color: #F0F0F0;
+			border: 2px solid #E7E7E7;
+			visibility: hidden;
+		}
 	</style>
 </head>
 <body>
 	<?php
 		function getJSON()
 		{
-			$kwd = "";
-			$category = "";
-			$condition_new = "";
-			$condition_used = "";
-			$condition_unspec = "";
-
-			$local_pickup= "";
-			$free_shipping = "";
-
-			if (!empty($_POST))
+			if (empty($_GET))
 			{
-				$kwd = $_POST["keyword"];
-				$category = $_POST["category"];
-
-				$condition_new = isset($_POST["new"]) ? 1 : 0;
-				$condition_used = isset($_POST["used"]) ? 1 : 0;
-				$condition_unspec = isset($_POST["unspec"]) ? 1 : 0;
-
-				$local_pickup = isset($_POST["local"]) ? 1 : 0;
-				$free_shipping = isset($_POST["free"]) ? 1 : 0;
-
-				//The URL of the API call
-				$_API_URL = "http://svcs.ebay.com/services/search/FindingService/v1?OPERATION-NAME=findItemsAdvanced&SERVICE-VERSION=1.0.0&SECURITY-APPNAME=MatthewJ-CS571-PRD-2f2cd4cf7-09303b6c&RESPONSE-DATA-FORMAT=JSON&REST-PAYLOAD&paginationInput.entriesPerPage=20&keywords=usc&itemFilter.name=FreeShippingOnly&itemFilter.value=true&itemFilter.name=LocalPickupOnly&itemFilter.value=true&itemFilter.name=Condition&itemFilter.value=New&itemFilter.value=Used&itemFilter.value=Unspecified&buyerPostalCode=90007&itemFilter.name=MaxDistance&itemFilter.value=10&itemFilter.name=HideDuplicateItems&itemFilter.value=true";
-
-				//Call API
-				$json = file_get_contents($_API_URL);
-				return $json;
+				return '""';
 			}
 
-			return NULL;
+			if (isset($_GET["zip"]))
+			{
+				$pattern = "/^[0-9]{5}$/";
+				if (preg_match($pattern, $_GET["zip"]) == 0)
+				{
+					return '"Bad ZIP"';
+				}
+			}
+
+			$kwd = "&keywords=" . str_replace(' ', '%20', $_GET["keyword"]);
+			$category = ($_GET["category"] == "all") ? "" : "&categoryId={$_GET["category"]}";
+			$condition = "&itemFilter.name=Condition";
+			
+			if (!isset($_GET["new"]) and !isset($_GET["used"]) and !isset($_GET["unspec"]))
+			{
+				$condition = "&itemFilter.value=New&itemFilter.value=Used&itemFilter.value=Unspecified";
+			}
+			else
+			{
+				if (isset($_GET["new"])) { $condition .= "&itemFilter.value=New"; }
+				if (isset($_GET["used"])) { $condition .= "&itemFilter.value=Used"; }
+				if (isset($_GET["unspec"])) { $condition .= "&itemFilter.value=Unspecified"; }
+			}
+
+			$shipping = "";
+
+			if (!isset($_GET["local"]) and !isset($_GET["free"]))
+			{
+				$shipping = "&itemFilter.name=FreeShippingOnly&itemFilter.value=true&itemFilter.name=LocalPickupOnly&itemFilter.value=true";
+			}
+			else
+			{
+				if (isset($_GET["local"])) { $shipping .= "&itemFilter.name=LocalPickupOnly&itemFilter.value=true"; }
+				if (isset($_GET["free"])) { $shipping .= "&itemFilter.name=FreeShippingOnly&itemFilter.value=true"; }
+			}
+
+			//The URL of the API call
+			$_API_URL = "http://svcs.ebay.com/services/search/FindingService/v1?OPERATION-NAME=findItemsAdvanced&SERVICE-VERSION=1.0.0&SECURITY-APPNAME=MatthewJ-CS571-PRD-2f2cd4cf7-09303b6c&RESPONSE-DATA-FORMAT=JSON&REST-PAYLOAD&paginationInput.entriesPerPage=20{$kwd}{$category}{$shipping}{$condition}&buyerPostalCode=90007&itemFilter.name=MaxDistance&itemFilter.value=10&itemFilter.name=HideDuplicateItems&itemFilter.value=true";
+
+			//Call API
+			$json = file_get_contents($_API_URL);
+
+			return $json;
 		}
 	?>
-	<form id="main-frame" method="post" onsubmit="return false;">
+	<form id="main-frame" method="get" onsubmit="">
 		<h1><i>Product Search</i></h1>
 		<hr>
 		<div>
@@ -130,21 +168,21 @@
 				<option value="267">Books</option>
 				<option value="11450">Clothing, Shoes & Accessories</option>
 				<option value="58058">Computers/Tablets & Networking</option>
-				<option value="26395">Helath & Beauty</option>
+				<option value="26395">Health & Beauty</option>
 				<option value="11233">Music</option>
 				<option value="1249">Video Games & Consoles</option>
 			</select>
 		</div>
 		<div>
 			<h3>Condition</h3>
-			<input id="new" type="checkbox" name="new">New</input>
-			<input id="used" type="checkbox" name="used">Used</input>
-			<input id="unspecified" type="checkbox" name="unspec">Unspecified</input>
+			<input name="new" id="new" type="checkbox">New</input>
+			<input name="used" id="used" type="checkbox">Used</input>
+			<input name="unspec" id="unspecified" type="checkbox">Unspecified</input>
 		</div>
 		<div>
 			<h3>Shipping Options</h3>
-			<input id="local" type="checkbox" name="local">Local Pickup</input>
-			<input id="free-shipping" type="checkbox" name="free">Free Shipping</input>
+			<input name="local" id="local" type="checkbox">Local Pickup</input>
+			<input name="free" id="free-shipping" type="checkbox">Free Shipping</input>
 		</div>
 		<table class="nearby-search">
 			<tr>
@@ -168,43 +206,102 @@
 		</table>
 		<br>
 		<div class="buttons">
-			<input type="submit" name="submit" value="Search" onclick="submitForm()"></input>
+			<input id="submit-form" type="submit" name="submit" value="Search" disabled></input>
 			<input type="button" name="clear" value="Clear" onclick="clearForm()"></input>
 		</div>
 	</form>
 	<br>
 	<table id="results-table">
 	</table>
-
+	<div id="error-bar">
+	</div>
 	<script type="text/javascript">
+		var geoLocationJSON = null;
+
 		function submitForm()
 		{
 			var json = <?php echo getJSON(); ?>;
+			if (json == "") { return; }
+			if (json == "Bad ZIP") 
+			{
+				document.getElementById("error-bar").innerHTML = "Zipcode is invalid";
+				document.getElementById("error-bar").style.visibility = "visible";
+				return;
+			}
 
 			var html_text = "";
-			html_text += "<th>";
-			html_text += "<td><strong>Index</strong></td>";
-			html_text += "<td><strong>Photo</strong></td>";
-			html_text += "<td><strong>Name</strong></td>";
-			html_text += "<td><strong>Price</strong></td>";
-			html_text += "<td><strong>Zip code</strong></td>";
-			html_text += "<td><strong>Condition</strong></td>";
-			html_text += "<td><strong>Shipping option</strong></td>";
-			html_text += "</th>";
+			html_text += "<tr>";
+			html_text += "<th><strong>Index</strong></th>";
+			html_text += "<th><strong>Photo</strong></th>";
+			html_text += "<th><strong>Name</strong></th>";
+			html_text += "<th><strong>Price</strong></th>";
+			html_text += "<th><strong>Zip code</strong></th>";
+			html_text += "<th><strong>Condition</strong></th>";
+			html_text += "<th><strong>Shipping option</strong></th>";
+			html_text += "</tr>";
+
+			if (!("item" in json.findItemsAdvancedResponse[0].searchResult[0]))
+			{
+				document.getElementById("error-bar").innerHTML = "No records have been found";
+				document.getElementById("error-bar").style.visibility = "visible";
+				return;
+			}
 
 			var items = json.findItemsAdvancedResponse[0].searchResult[0].item;
 
 			for (i = 0; i < items.length; i++)
 			{
 				html_text += "<tr>";
-				//html_text += "<td>" + (i+1) + "</td>";
-				//html_text += "<td><a href=\"" + items[i].galleryURL[0] + "\"/></td>";
-				//html_text += "<td>" + items[i].title[0] +"</td>";
-				//html_text += "<td>$" + items[i].sellingStatus[0].currentPrice[0].__value__ +"</td>";
-				//html_text += "<td>" + items[i].postalCode[0] +"</td>";
+				html_text += "<td>" + (i+1) + "</td>";
+				html_text += "<td><img src=\"" + items[i].galleryURL[0] + "\"/></td>";
+
+				if (("title") in items[i])
+				{
+					html_text += "<td>" + items[i].title[0] +"</td>";
+				}
+				else
+				{
+					html_text += "<td>N/A</td>";
+				}
+
+				if (("sellingStatus") in items[i])
+				{
+					html_text += "<td>$" + Number(items[i].sellingStatus[0].currentPrice[0].__value__).toFixed(2) +"</td>";
+				}
+				else
+				{
+					html_text += "<td>N/A</td>";
+				}
+
+				if (("postalCode") in items[i])
+				{
+					html_text += "<td>" + items[i].postalCode[0] +"</td>";
+				}
+				else
+				{
+					html_text += "<td>N/A</td>";
+				}
+
+				if (("condition") in items[i])
+				{
+					html_text += "<td>" + items[i].condition[0].conditionDisplayName + "</td>";
+				}
+				else
+				{
+					html_text += "<td>N/A</td>";
+				}
+				if (("shippingInfo") in items[i])
+				{
+					html_text += "<td>" + ((Number(items[i].shippingInfo[0].shippingServiceCost[0].__value__) == 0) ? "Free Shipping" : ("$" + Number(items[i].shippingInfo[0].shippingServiceCost[0].__value__).toFixed(2))) +"</td>";
+				}
+				else
+				{
+					html_text += "<td>N/A</td>";
+				}
 				html_text += "</tr>";
 			}
 
+			document.getElementById("error-bar").style.visibility = "hidden";
 			document.getElementById("results-table").innerHTML = html_text;
 		}
 
@@ -250,6 +347,20 @@
 			}
 			document.getElementById("main-frame").reset();
 			document.getElementById("results-table").innerHTML = "";
+			document.getElementById("error-bar").innerHTML = "";
+			document.getElementById("error-bar").style.visibility = "hidden";
+		}
+
+		window.onload = function() {
+			var xml = new XMLHttpRequest();
+
+			xml.open("GET", "http://ip-api.com/json", false);
+			xml.send();
+			geoLocationJSON = JSON.parse(xml.responseText);
+
+			document.getElementById("submit-form").disabled = false;
+
+			submitForm();
 		}
 	</script>
 </body>
