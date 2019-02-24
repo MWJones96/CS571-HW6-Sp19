@@ -72,7 +72,7 @@
 		#results-table
 		{
 			padding: 0;
-			margin: auto;
+			margin: 0 auto;
 			width: 1000px;
 		}
 
@@ -107,44 +107,50 @@
 				return '""';
 			}
 
-			if (isset($_GET["zip"]))
-			{
-				$pattern = "/^[0-9]{5}$/";
-				if (preg_match($pattern, $_GET["zip"]) == 0)
-				{
-					return '"Bad ZIP"';
-				}
-			}
-
-			$kwd = "&keywords=" . str_replace(' ', '%20', $_GET["keyword"]);
+			$kwd = str_replace(' ', '%20', $_GET["keyword"]);
 			$category = ($_GET["category"] == "all") ? "" : "&categoryId={$_GET["category"]}";
-			$condition = "&itemFilter.name=Condition";
-			
-			if (!isset($_GET["new"]) and !isset($_GET["used"]) and !isset($_GET["unspec"]))
+
+			$freeShipping = "false";
+			$localPickup = "false";
+
+			if (!isset($_GET["local"]) && !isset($_GET["free"]))
 			{
-				$condition = "&itemFilter.value=New&itemFilter.value=Used&itemFilter.value=Unspecified";
+				$freeShipping = "true";
+				$localPickup = "true";
 			}
 			else
 			{
-				if (isset($_GET["new"])) { $condition .= "&itemFilter.value=New"; }
-				if (isset($_GET["used"])) { $condition .= "&itemFilter.value=Used"; }
-				if (isset($_GET["unspec"])) { $condition .= "&itemFilter.value=Unspecified"; }
+				if (isset($_GET["local"])) { $localPickup = "true"; }
+				if (isset($_GET["free"])) { $freeShipping = "true"; }
 			}
 
-			$shipping = "";
+			$condition = "";
 
-			if (!isset($_GET["local"]) and !isset($_GET["free"]))
+			if (!isset($_GET["new"]) && !isset($_GET["used"]) && !isset($_GET["unspec"]))
 			{
-				$shipping = "&itemFilter.name=FreeShippingOnly&itemFilter.value=true&itemFilter.name=LocalPickupOnly&itemFilter.value=true";
+				$condition = "&itemFilter(4).value(0)=New&itemFilter(4).value(1)=Used&itemFilter(4).value(2)=Unspecified";
 			}
 			else
 			{
-				if (isset($_GET["local"])) { $shipping .= "&itemFilter.name=LocalPickupOnly&itemFilter.value=true"; }
-				if (isset($_GET["free"])) { $shipping .= "&itemFilter.name=FreeShippingOnly&itemFilter.value=true"; }
+				$index = 0;
+				if (isset($_GET["new"])) { $condition .= "&itemFilter(4).value({$index})=New"; $index++; }
+				if (isset($_GET["used"])) { $condition .= "&itemFilter(4).value({$index})=Used"; $index++; }
+				if (isset($_GET["unspec"])) { $condition .= "&itemFilter(4).value({$index})=Unspecified"; }
 			}
 
-			//The URL of the API call
-			$_API_URL = "http://svcs.ebay.com/services/search/FindingService/v1?OPERATION-NAME=findItemsAdvanced&SERVICE-VERSION=1.0.0&SECURITY-APPNAME=MatthewJ-CS571-PRD-2f2cd4cf7-09303b6c&RESPONSE-DATA-FORMAT=JSON&REST-PAYLOAD&paginationInput.entriesPerPage=20{$kwd}{$category}{$shipping}{$condition}&buyerPostalCode=90007&itemFilter.name=MaxDistance&itemFilter.value=10&itemFilter.name=HideDuplicateItems&itemFilter.value=true";
+			$distance = "0";
+			$zip = "90007";
+
+			//Nearby search enabled
+			if (isset($_GET["nearby"]))
+			{
+				if (empty($_GET["miles"]) == "") { $distance = "10"; }
+				else { $distance = $_GET["miles"]; }
+
+				if ($_GET["location"] == "zip") { $zip = $_GET["zip"]; }
+			}
+
+			$_API_URL = "http://svcs.ebay.com/services/search/FindingService/v1?OPERATION-NAME=findItemsAdvanced&SERVICE-VERSION=1.0.0&SECURITY-APPNAME=MatthewJ-CS571-PRD-2f2cd4cf7-09303b6c&RESPONSE-DATA-FORMAT=JSON&REST-PAYLOAD&paginationInput.entriesPerPage=20&keywords={$kwd}{$category}&buyerPostalCode={$zip}&itemFilter(0).name=MaxDistance&itemFilter(0).value={$distance}&itemFilter(1).name=FreeShippingOnly&itemFilter(1).value={$freeShipping}&itemFilter(2).name=LocalPickupOnly&itemFilter(2).value={$localPickup}&itemFilter(3).name=HideDuplicateItems&itemFilter(3).value=true&itemFilter(4).name=Condition{$condition}";
 
 			//Call API
 			$json = file_get_contents($_API_URL);
@@ -152,12 +158,12 @@
 			return $json;
 		}
 	?>
-	<form id="main-frame" method="get" onsubmit="">
+	<form id="main-frame" method="get">
 		<h1><i>Product Search</i></h1>
 		<hr>
 		<div>
 			<h3>Keyword</h3>
-			<input name="keyword" id="keyword" input type="textarea" name="keyword-entry" required></input>
+			<input name="keyword" id="keyword" input type="textarea" name="keyword-entry" value="<?php if (isset($_GET["keyword"])) echo $_GET["keyword"] ?>" required></input>
 		</div>
 		<div>
 			<h3>Category</h3>
@@ -175,14 +181,14 @@
 		</div>
 		<div>
 			<h3>Condition</h3>
-			<input name="new" id="new" type="checkbox">New</input>
-			<input name="used" id="used" type="checkbox">Used</input>
-			<input name="unspec" id="unspecified" type="checkbox">Unspecified</input>
+			<input name="new" id="new" type="checkbox" value="<?php if (isset($_GET["new"])) echo $_GET["new"] ?>">New</input>
+			<input name="used" id="used" type="checkbox" value="<?php if (isset($_GET["used"])) echo $_GET["used"] ?>">Used</input>
+			<input name="unspec" id="unspecified" type="checkbox" value="<?php if (isset($_GET["unspec"])) echo $_GET["unspec"] ?>">Unspecified</input>
 		</div>
 		<div>
 			<h3>Shipping Options</h3>
-			<input name="local" id="local" type="checkbox">Local Pickup</input>
-			<input name="free" id="free-shipping" type="checkbox">Free Shipping</input>
+			<input name="local" id="local" type="checkbox" value="<?php if (isset($_GET["local"])) echo $_GET["local"] ?>">Local Pickup</input>
+			<input name="free" id="free-shipping" type="checkbox" value="<?php if (isset($_GET["free"])) echo $_GET["free"] ?>">Free Shipping</input>
 		</div>
 		<table class="nearby-search">
 			<tr>
@@ -193,21 +199,21 @@
 					<strong>miles from</strong>
 				</td>
 				<td>
-					<input class="cond-fields" type="radio" name="location" onclick = "disableZipReq()" disabled checked>Here</input>
+					<input class="cond-fields" type="radio" value="here" name="location" onclick = "disableZipReq()" disabled checked>Here</input>
 				</td>
 			</tr>
 			<tr>
 				<td></td>
 				<td>
-					<input class="cond-fields" type="radio" name="location" onclick = "enableZipReq()"disabled></input>
-					<input id="zip" class="cond-fields" type="number" name="zip" placeholder="zip code" disabled></input>
+					<input class="cond-fields" type="radio" name="location" onclick = "enableZipReq()" value="zip" disabled></input>
+					<input id="zip" class="cond-fields" type="textarea" name="zip" placeholder="zip code" disabled></input>
 				</td>
 			</tr>
 		</table>
 		<br>
 		<div class="buttons">
 			<input id="submit-form" type="submit" name="submit" value="Search" disabled></input>
-			<input type="button" name="clear" value="Clear" onclick="clearForm()"></input>
+			<input type="reset" name="clear" value="Clear" onclick="clearForm()"></input>
 		</div>
 	</form>
 	<br>
@@ -222,10 +228,15 @@
 		{
 			var json = <?php echo getJSON(); ?>;
 			if (json == "") { return; }
-			if (json == "Bad ZIP") 
+
+			if (json.findItemsAdvancedResponse[0].ack[0] == "Failure")
 			{
-				document.getElementById("error-bar").innerHTML = "Zipcode is invalid";
-				document.getElementById("error-bar").style.visibility = "visible";
+				if (json.findItemsAdvancedResponse[0].errorMessage[0].error[0].errorId[0] == "18")
+				{
+					document.getElementById("error-bar").innerHTML = "Zipcode is invalid";
+					document.getElementById("error-bar").style.visibility = "visible";
+				}
+				
 				return;
 			}
 
@@ -307,7 +318,7 @@
 
 		function disableZipReq()
 		{
-			document.getElementById("zip").required = 0;
+			document.getElementById("zip").required = false;
 		}
 
 		function enableZipReq()
@@ -345,10 +356,13 @@
 			{
 				fields[i].disabled = true;
 			}
-			document.getElementById("main-frame").reset();
+
 			document.getElementById("results-table").innerHTML = "";
 			document.getElementById("error-bar").innerHTML = "";
 			document.getElementById("error-bar").style.visibility = "hidden";
+
+			window.history.pushState({}, document.title, "/HW6/yertdgbtrdgfbrttrh.php");
+			window.location.reload();
 		}
 
 		window.onload = function() {
