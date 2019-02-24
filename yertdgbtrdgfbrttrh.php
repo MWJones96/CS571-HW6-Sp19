@@ -8,7 +8,7 @@
 			border: 3px solid #CACACA;
 			background-color: #FAFAFA;
 			width: 700px;
-			margin: auto;
+			margin: 0 auto;
 		}
 
 		#main-frame h1
@@ -87,6 +87,17 @@
 			width: 65px;
 		}
 
+		#results-table tr td a
+		{
+			text-decoration: none;
+			color: black;
+		}
+
+		#results-table tr td a:hover
+		{
+			text-shadow: 1px 1px #000;
+		}
+
 		#error-bar
 		{
 			text-align: center;
@@ -144,7 +155,7 @@
 			//Nearby search enabled
 			if (isset($_GET["nearby"]))
 			{
-				if (empty($_GET["miles"]) == "") { $distance = "10"; }
+				if (empty($_GET["miles"])) { $distance = "10"; }
 				else { $distance = $_GET["miles"]; }
 
 				if ($_GET["location"] == "zip") { $zip = $_GET["zip"]; }
@@ -168,32 +179,32 @@
 		<div>
 			<h3>Category</h3>
 			<select name="category" id="category">
-				<option value="all">All Categories</option>
-				<option value="550">Art</option>
-				<option value="2984">Baby</option>
-				<option value="267">Books</option>
-				<option value="11450">Clothing, Shoes & Accessories</option>
-				<option value="58058">Computers/Tablets & Networking</option>
-				<option value="26395">Health & Beauty</option>
-				<option value="11233">Music</option>
-				<option value="1249">Video Games & Consoles</option>
+				<option <?php if (isset($_GET["category"]) && $_GET["category"] == "all") { echo "selected"; } ?> value="all">All Categories</option>
+				<option <?php if (isset($_GET["category"]) && $_GET["category"] == "550") { echo "selected"; } ?> value="550">Art</option>
+				<option <?php if (isset($_GET["category"]) && $_GET["category"] == "2984") { echo "selected"; } ?> value="2984">Baby</option>
+				<option <?php if (isset($_GET["category"]) && $_GET["category"] == "267") { echo "selected"; } ?> value="267">Books</option>
+				<option <?php if (isset($_GET["category"]) && $_GET["category"] == "11450") { echo "selected"; } ?> value="11450">Clothing, Shoes & Accessories</option>
+				<option <?php if (isset($_GET["category"]) && $_GET["category"] == "58058") { echo "selected"; } ?> value="58058">Computers/Tablets & Networking</option>
+				<option <?php if (isset($_GET["category"]) && $_GET["category"] == "26395") { echo "selected"; } ?> value="26395">Health & Beauty</option>
+				<option <?php if (isset($_GET["category"]) && $_GET["category"] == "11233") { echo "selected"; } ?> value="11233">Music</option>
+				<option <?php if (isset($_GET["category"]) && $_GET["category"] == "1249") { echo "selected"; } ?> value="1249">Video Games & Consoles</option>
 			</select>
 		</div>
 		<div>
 			<h3>Condition</h3>
-			<input name="new" id="new" type="checkbox" value="<?php if (isset($_GET["new"])) echo $_GET["new"] ?>">New</input>
-			<input name="used" id="used" type="checkbox" value="<?php if (isset($_GET["used"])) echo $_GET["used"] ?>">Used</input>
-			<input name="unspec" id="unspecified" type="checkbox" value="<?php if (isset($_GET["unspec"])) echo $_GET["unspec"] ?>">Unspecified</input>
+			<input name="new" id="new" type="checkbox"<?php if (isset($_GET["new"])) echo "checked" ?>>New</input>
+			<input name="used" id="used" type="checkbox" <?php if (isset($_GET["used"])) echo "checked" ?>>Used</input>
+			<input name="unspec" id="unspecified" type="checkbox" <?php if (isset($_GET["unspec"])) echo "checked" ?>>Unspecified</input>
 		</div>
 		<div>
 			<h3>Shipping Options</h3>
-			<input name="local" id="local" type="checkbox" value="<?php if (isset($_GET["local"])) echo $_GET["local"] ?>">Local Pickup</input>
-			<input name="free" id="free-shipping" type="checkbox" value="<?php if (isset($_GET["free"])) echo $_GET["free"] ?>">Free Shipping</input>
+			<input name="local" id="local" type="checkbox" <?php if (isset($_GET["local"])) echo "checked" ?>>Local Pickup</input>
+			<input name="free" id="free-shipping" type="checkbox" <?php if (isset($_GET["free"])) echo "checked" ?>>Free Shipping</input>
 		</div>
 		<table class="nearby-search">
 			<tr>
 				<td>
-					<input id="enable-search" type="checkbox" name="nearby" onchange="enableNearbySearch()"></input>
+					<input id="enable-search" type="checkbox" name="nearby" <?php if (isset($_GET["nearby"])) { echo "checked"; } ?> onchange="enableNearbySearch()"></input>
 					<strong>Enable Nearby Search</strong>
 					<input class="cond-fields" type="number" name="miles" placeholder="10" disabled></input>
 					<strong>miles from</strong>
@@ -231,13 +242,10 @@
 
 			if (json.findItemsAdvancedResponse[0].ack[0] == "Failure")
 			{
-				if (json.findItemsAdvancedResponse[0].errorMessage[0].error[0].errorId[0] == "18")
-				{
 					document.getElementById("error-bar").innerHTML = "Zipcode is invalid";
 					document.getElementById("error-bar").style.visibility = "visible";
-				}
-				
-				return;
+
+					return;
 			}
 
 			var html_text = "";
@@ -264,15 +272,23 @@
 			{
 				html_text += "<tr>";
 				html_text += "<td>" + (i+1) + "</td>";
-				html_text += "<td><img src=\"" + items[i].galleryURL[0] + "\"/></td>";
 
-				if (("title") in items[i])
+				if (("galleryURL") in items[i])
 				{
-					html_text += "<td>" + items[i].title[0] +"</td>";
+					html_text += "<td><img src=\"" + items[i].galleryURL[0] + "\"/></td>";
 				}
 				else
 				{
-					html_text += "<td>N/A</td>";
+					html_text += "<td></td>";
+				}
+
+				if (("title") in items[i])
+				{
+					html_text += "<td><a href=\"\">" + items[i].title[0] + "</a></td>";
+				}
+				else
+				{
+					html_text += "<td><a href=\"\">N/A</a></td>";
 				}
 
 				if (("sellingStatus") in items[i])
