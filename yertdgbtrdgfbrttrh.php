@@ -98,6 +98,23 @@
 			text-shadow: 1px 1px #000;
 		}
 
+		#item-table h1
+		{
+			text-align: center;
+		}
+
+		#item-table table, #item-table table td, #item-table table tr
+		{
+			margin: auto;
+			border: 1px solid grey;
+			border-collapse: collapse;
+		}
+
+		#item-table table tr td img
+		{
+			height: 200px;
+		}
+
 		#error-bar
 		{
 			text-align: center;
@@ -168,6 +185,17 @@
 
 			return $json;
 		}
+
+		function getItemJSON()
+		{
+			if (!isset($_POST["itemID"])) { return '""'; }
+			$itemID = $_POST["itemID"];
+
+			$_API_URL = "http://open.api.ebay.com/shopping?callname=GetSingleItem&responseencoding=JSON&appid=MatthewJ-CS571-PRD-2f2cd4cf7-09303b6c&siteid=0&version=967&ItemID={$itemID}&IncludeSelector=Description,Details,ItemSpecifics";
+
+			$json = file_get_contents($_API_URL);
+			return $json;
+		}
 	?>
 	<form id="main-frame" method="get">
 		<h1><i>Product Search</i></h1>
@@ -206,18 +234,18 @@
 				<td>
 					<input id="enable-search" type="checkbox" name="nearby" <?php if (isset($_GET["nearby"])) { echo "checked"; } ?> onchange="enableNearbySearch()"></input>
 					<strong>Enable Nearby Search</strong>
-					<input class="cond-fields" type="number" name="miles" placeholder="10" disabled></input>
+					<input class="cond-fields" type="number" name="miles" placeholder="10" <?php if (!isset($_GET["nearby"])) { echo "disabled"; } ?> value="<?php if (!empty($_GET["miles"])) { echo $_GET["miles"]; } ?>"></input>
 					<strong>miles from</strong>
 				</td>
 				<td>
-					<input class="cond-fields" type="radio" value="here" name="location" onclick = "disableZipReq()" disabled checked>Here</input>
+					<input class="cond-fields" type="radio" value="here" name="location" onclick = "disableZipReq()" <?php if (!isset($_GET["nearby"])) { echo "disabled"; } ?> checked>Here</input>
 				</td>
 			</tr>
 			<tr>
 				<td></td>
 				<td>
-					<input class="cond-fields" type="radio" name="location" onclick = "enableZipReq()" value="zip" disabled></input>
-					<input id="zip" class="cond-fields" type="textarea" name="zip" placeholder="zip code" disabled></input>
+					<input class="cond-fields" type="radio" name="location" onclick = "enableZipReq()" value="zip" <?php if (!isset($_GET["nearby"])) { echo "disabled"; } ?>></input>
+					<input id="zip" class="cond-fields" type="textarea" name="zip" placeholder="zip code" <?php if (!isset($_GET["nearby"])) { echo "disabled"; } ?> value="<?php if (!empty($_GET["zip"])) { echo $_GET["zip"]; } ?>"></input>
 				</td>
 			</tr>
 		</table>
@@ -230,14 +258,21 @@
 	<br>
 	<table id="results-table">
 	</table>
+	<div id="item-table">
+	</div>
 	<div id="error-bar">
 	</div>
+	<form id="post-item-id" method="post" onsubmit="return false">
+		<input id="itemID" type="hidden" name="itemID">
+	</form>
 	<script type="text/javascript">
 		var geoLocationJSON = null;
+		var json = null;
+		var itemJSON = null;
 
 		function submitForm()
 		{
-			var json = <?php echo getJSON(); ?>;
+			json = <?php echo getJSON(); ?>;
 			if (json == "") { return; }
 
 			if (json.findItemsAdvancedResponse[0].ack[0] == "Failure")
@@ -282,13 +317,14 @@
 					html_text += "<td></td>";
 				}
 
+				var index = i;
 				if (("title") in items[i])
 				{
-					html_text += "<td><a href=\"\">" + items[i].title[0] + "</a></td>";
+					html_text += "<td><a href='' onclick='displayItemInfo(" + index + "); return true;'>" + items[i].title[0] + "</a></td>";
 				}
 				else
 				{
-					html_text += "<td><a href=\"\">N/A</a></td>";
+					html_text += "<td><a href='' onclick='displayItemInfo(" + index + "); return true'>N/A</a></td>";
 				}
 
 				if (("sellingStatus") in items[i])
@@ -330,6 +366,68 @@
 
 			document.getElementById("error-bar").style.visibility = "hidden";
 			document.getElementById("results-table").innerHTML = html_text;
+		}
+
+		function displayItemInfo(index)
+		{
+			var itemID = json.findItemsAdvancedResponse[0].searchResult[0].item[index].itemId;
+
+			document.getElementById("results-table").innerHTML = "";
+			document.getElementById("itemID").value = itemID;
+
+			document.getElementById("post-item-id").submit();
+			itemJSON = <?php echo getItemJSON(); ?>;
+
+			var html_text = "<h1><i>Item Details</i></h1><table>";
+
+			html_text += "<tr>";
+			html_text += "<td><b>Photo</b></td>";
+			html_text += "<td><img src=\"" + itemJSON.Item.PictureURL[0] + "\"/></td>";
+			html_text += "</tr>";
+
+			html_text += "<tr>";
+			html_text += "<td><b>Title</b></td>";
+			html_text += "<td>" + itemJSON.Item.Title + "</td>";
+			html_text += "</tr>";
+
+			html_text += "<tr>";
+			html_text += "<td><b>Subtitle</b></td>";
+			html_text += "<td>" + (("Subtitle" in itemJSON.Item) ?itemJSON.Item.Subtitle : "N/A") + "</td>";
+			html_text += "</tr>";
+
+			html_text += "<tr>";
+			html_text += "<td><b>Price</b></td>";
+			html_text += "<td>$" + Number(itemJSON.Item.CurrentPrice.Value).toFixed(2) + "</td>";
+			html_text += "</tr>";
+
+			html_text += "<tr>";
+			html_text += "<td><b>Location</b></td>";
+			html_text += "<td>" + itemJSON.Item.Location + ", " + itemJSON.Item.PostalCode + "</td>";
+			html_text += "</tr>";
+
+			html_text += "<tr>";
+			html_text += "<td><b>Seller</b></td>";
+			html_text += "<td>" + itemJSON.Item.Seller.UserID + "</td>";
+			html_text += "</tr>";
+
+			html_text += "<tr>";
+			html_text += "<td><b>Return Policy (US)</b></td>";
+			html_text += "<td>" + itemJSON.Item.ReturnPolicy.ReturnsAccepted + "</td>";
+			html_text += "</tr>";
+
+			var i = 0;
+			for(i=0;i<itemJSON.Item.ItemSpecifics.NameValueList.length;i++)
+			{
+				html_text += "<tr>";
+				html_text += "<td><b>" + itemJSON.Item.ItemSpecifics.NameValueList[i].Name + "</b></td>";
+				html_text += "<td>" + itemJSON.Item.ItemSpecifics.NameValueList[i].Value[0] + "</td>";
+				html_text += "</tr>";
+			}
+
+			html_text += "</table><br><br>";
+
+			document.getElementById("item-table").innerHTML = html_text;
+			document.getElementById("item-table").visibility = "visible";
 		}
 
 		function disableZipReq()
