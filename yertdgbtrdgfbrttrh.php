@@ -3,25 +3,29 @@
 <head>
 	<title>Homework 6</title>
 	<style type="text/css">
-		#main-frame { border: 3px solid #CACACA; background-color: #FAFAFA; width: 700px; margin: 0 auto; }
-		#main-frame h1 {text-align: center; margin-bottom: 15px; }
-		#main-frame hr { width: 98%; }
-		#main-frame div { padding-left: 15px; display: flex; height: 22px; align-items: center; margin-bottom: 5px; }
-		#main-frame div input, select{height: 18px;margin-left: 10px;}
-		#main-frame div ul{list-style-type: none;padding: 0;}
-		#main-frame div strong{margin-left: 5px;margin-right: 5px;}
-		#main-frame .nearby-search{margin-left: 20px;}
-		#main-frame .buttons{padding: 0;margin: 0;margin-bottom: 25px;justify-content: center;}
-		#main-frame .buttons input{width: 65px;height: 25px;}
-		#results-table{padding: 0;margin: 0 auto;width: 1000px;}
-		#results-table, #results-table td, #results-table th{border: 1px solid grey;border-collapse: collapse;}
-		#results-table tr td img{width: 65px;}
-		#results-table tr td a{text-decoration: none;color: black;}
-		#results-table tr td a:hover{color: grey;}
-		#item-table h1{text-align: center;}
-		#item-table table, #item-table table td, #item-table table tr{margin: auto;border: 1px solid grey;border-collapse: collapse;}
-		#item-table table tr td img{height: 200px;}
-		#error-bar{text-align: center;margin: auto;width: 1000px;background-color: #F0F0F0;border: 2px solid #E7E7E7;visibility: hidden;}
+		#product-search { border: 3px solid #CACACA; background-color: #FAFAFA; width: 700px; margin: 0 auto; }
+		#product-search h1 {text-align: center; margin-bottom: 15px; }
+		#product-search hr { width: 98%; }
+		#product-search div { padding-left: 15px; display: flex; height: 22px; align-items: center; margin-bottom: 5px; }
+		#product-search div input, select { height: 18px; margin-left: 10px; }
+		#product-search div ul { list-style-type: none; padding: 0; }
+		#product-search div strong { margin-left: 5px; margin-right: 5px; }
+		#product-search .nearby-search { margin-left: 20px; }
+		#product-search .buttons { padding: 0; margin: 0; margin-bottom: 25px; justify-content: center; }
+		#product-search .buttons input {width: 65px; height: 25px; }
+		#results-table {padding: 0; margin: 0 auto; width: 1000px; }
+		#results-table table, #results-table table td, #results-table table th {border: 1px solid grey; border-collapse: collapse; }
+		#results-table table tr td img { width: 65px; }
+		#results-table table tr td a {text-decoration: none; color: black; }
+		#results-table table tr td a:hover { color: grey; }
+		#item-table div { text-align: center; }
+		#item-table div p { color: grey;  }
+		#item-table div img { width: 50px; }
+		#item-table h1 { text-align: center; }
+		#item-table table { margin: auto; }
+		#item-table table, #item-table table td { border: 1px solid grey; border-collapse: collapse; }
+		#item-table table tr td img { height: 250px; }
+		#error-bar { text-align: center; margin: auto; width: 1000px; background-color: #F0F0F0; border: 2px solid #E7E7E7; visibility: hidden; }
 	</style>
 	<script type="text/javascript">
 		function disableZipReq()
@@ -45,7 +49,6 @@
 				{
 					fields[i].disabled = 0;
 				}
-
 			}
 			else
 			{
@@ -59,7 +62,9 @@
 
 		function OnItemClick(itemIndex)
 		{
-			alert(itemIndex);
+			document.getElementById("itemID").value = json.findItemsAdvancedResponse[0].searchResult[0].item[itemIndex].itemId;
+			document.getElementById("userZip").value = geoLocationJSON.zip;
+			document.getElementById("product-search").submit();
 		}
 
 		function clearForm()
@@ -85,14 +90,16 @@
 		{
 			if (empty($_GET)){return '""';}
 
+			if ($_GET["itemID"] != "0") { return getItemJSON(); }
+
 			$kwd = str_replace(' ', '%20', $_GET["keyword"]);
 			$category = ($_GET["category"] == "all") ? "" : "&categoryId={$_GET["category"]}";
 
 			$freeShipping = "false";
 			$localPickup = "false";
 
-			if (!isset($_GET["local"]) && !isset($_GET["free"])){$freeShipping = "true";$localPickup = "true";}
-			else{if (isset($_GET["local"])) { $localPickup = "true"; }if (isset($_GET["free"])) { $freeShipping = "true"; }}
+			if (!isset($_GET["local"]) && !isset($_GET["free"])) { $freeShipping = "true"; $localPickup = "true" ;}
+			else { if (isset($_GET["local"])) { $localPickup = "true"; } if (isset($_GET["free"])) { $freeShipping = "true"; }}
 
 			$condition = "";
 
@@ -109,17 +116,20 @@
 			}
 
 			$distance = "0";
-			$zip = "90007";
+			$zip = $_GET["userZip"];
 
 			//Nearby search enabled
 			if (isset($_GET["nearby"]))
 			{
+				//10 miles by default
 				if (empty($_GET["miles"])) { $distance = "10"; }
 				else { $distance = $_GET["miles"]; }
 
+				//If user specifies ZIP code, override default
 				if ($_GET["location"] == "zip") { $zip = $_GET["zip"]; }
 			}
 
+			//Builds URL for the API call with the data the user provides
 			$_API_URL = "http://svcs.ebay.com/services/search/FindingService/v1?OPERATION-NAME=findItemsAdvanced&SERVICE-VERSION=1.0.0&SECURITY-APPNAME=MatthewJ-CS571-PRD-2f2cd4cf7-09303b6c&RESPONSE-DATA-FORMAT=JSON&REST-PAYLOAD&paginationInput.entriesPerPage=20&keywords={$kwd}{$category}&buyerPostalCode={$zip}&itemFilter(0).name=MaxDistance&itemFilter(0).value={$distance}&itemFilter(1).name=FreeShippingOnly&itemFilter(1).value={$freeShipping}&itemFilter(2).name=LocalPickupOnly&itemFilter(2).value={$localPickup}&itemFilter(3).name=HideDuplicateItems&itemFilter(3).value=true&itemFilter(4).name=Condition{$condition}";
 
 			//Call API
@@ -130,7 +140,6 @@
 
 		function getItemJSON()
 		{
-			if (!isset($_GET["itemID"])) { return '""'; }
 			$itemID = $_GET["itemID"];
 
 			$_API_URL = "http://open.api.ebay.com/shopping?callname=GetSingleItem&responseencoding=JSON&appid=MatthewJ-CS571-PRD-2f2cd4cf7-09303b6c&siteid=0&version=967&ItemID={$itemID}&IncludeSelector=Description,Details,ItemSpecifics";
@@ -139,7 +148,7 @@
 			return $json;
 		}
 	?>
-	<form id="main-frame" method="get" onsubmit="return true">
+	<form id="product-search" method="get" onsubmit="return true">
 		<h1><i>Product Search</i></h1>
 		<hr>
 		<div>
@@ -193,38 +202,53 @@
 		</table>
 		<br>
 		<div class="buttons">
-			<input id="submit-form" type="submit" name="btnSubmit" value="Search" disabled></input>
+			<input id="submit-form" type="submit" name="btnSubmit" value="Search" onclick="submitForm()" disabled></input>
 			<input type="reset" name="clear" value="Clear" onclick="clearForm()"></input>
 		</div>
-		<input id="itemID" type="hidden" name="itemID" disabled>
-		<input id="userLoc" type="hidden" name="userLoc">
+		<input id="itemID" type="hidden" name="itemID" value=0>
+		<input id="userZip" type="hidden" name="userZip">
 	</form>
 	<br>
-	<table id="results-table">
-	</table>
+	<div id="results-table">
+	</div>
 	<div id="item-table">
 	</div>
 	<div id="error-bar">
 	</div>
 	<script type="text/javascript">
 		var json = null;
+		var geoLocationJSON = null;
 
 		function submitForm()
 		{
+			document.getElementById("userZip").value = geoLocationJSON.zip;
+		}
+
+		function buildPage()
+		{
 			json = <?php echo getJSON(); ?>;
-			var text = buildResultsPage(json);
+			if (json == "") { return; }
 
-			if (text == "") { return; }
-
-			if (text == "Zipcode is invalid" || text == "No records have been found") 
+			var text = "";
+			if ("findItemsAdvancedResponse" in json)
 			{
-				document.getElementById("error-bar").innerHTML = text;
-				document.getElementById("error-bar").style.visibility = "visible";
+				text = buildResultsPage(json);
 
-				return;
+				if (text == "Zipcode is invalid" || text == "No records have been found") 
+				{
+					document.getElementById("error-bar").innerHTML = text;
+					document.getElementById("error-bar").style.visibility = "visible";
+
+					return;
+				}
+
+				document.getElementById("results-table").innerHTML = text;
 			}
-
-			document.getElementById("results-table").innerHTML = text;
+			else
+			{
+				text = buildItemPage(json);
+				document.getElementById("item-table").innerHTML = text;
+			}
 		}
 
 		function buildResultsPage(json)
@@ -233,12 +257,12 @@
 			{
 				return "Zipcode is invalid";
 			}
-			else if (!("item" in text.findItemsAdvancedResponse[0].searchResult[0]))
+			else if (!("item" in json.findItemsAdvancedResponse[0].searchResult[0]))
 			{
 				return "No records have been found";
 			}
 
-			var html_text = "";
+			var html_text = "<table>";
 			html_text += "<tr>";
 			html_text += "<th><strong>Index</strong></th>";
 			html_text += "<th><strong>Photo</strong></th>";
@@ -251,19 +275,21 @@
 
 			var items = json.findItemsAdvancedResponse[0].searchResult[0].item;
 
-			for (i = 0; i < items.length; i++)
+			for (var i = 0; i < items.length; i++)
 			{
 				var index = i;
 				html_text += "<tr>";
 				html_text += "<td>" + (i+1) + "</td>";
 				html_text += "<td><img src=\"" + ((("galleryURL") in items[i]) ? items[i].galleryURL[0] : "N/A") + "\"/></td>";
-				html_text += "<td><a href='' onclick='displayItemInfo(" + index + "); return true;'>" + ((("title") in items[i]) ? items[i].title[0] : "N/A") + "</a></td>";
+				html_text += "<td><a href=\"#\" onclick='OnItemClick(" + index + "); return true;'>" + ((("title") in items[i]) ? items[i].title[0] : "N/A") + "</a></td>";
 				html_text += "<td>$" + ((("sellingStatus") in items[i]) ? Number(items[i].sellingStatus[0].currentPrice[0].__value__).toFixed(2) : "N/A") +"</td>";
 				html_text += "<td>" + ((("postalCode") in items[i]) ? items[i].postalCode[0] : "N/A") +"</td>";
 				html_text += "<td>" + ((("condition") in items[i]) ? items[i].condition[0].conditionDisplayName : "N/A") + "</td>";
 				html_text += "<td>" + ((("shippingInfo") in items[i]) ? ((Number(items[i].shippingInfo[0].shippingServiceCost[0].__value__) == 0) ? "Free Shipping" : ("$" + Number(items[i].shippingInfo[0].shippingServiceCost[0].__value__).toFixed(2))) : "N/A") +"</td>";
 				html_text += "</tr>";
 			}
+
+			html_text += "</table>";
 
 			return html_text;
 		}
@@ -273,7 +299,7 @@
 			var html_text = "<h1><i>Item Details</i></h1><table>";
 
 			html_text += "<tr><td><b>Photo</b></td><td>" + (("PictureURL" in itemJSON.Item) ? "<img src=\"" + itemJSON.Item.PictureURL[0] + "\">" : "") +"</td></tr>";
-			html_text += "<tr><td><b>Title</b></td><td>" + (("Title" in itemJSON.Item) ? itemJSON.Item.Title ? "N/A") + "</td></tr>";
+			html_text += "<tr><td><b>Title</b></td><td>" + (("Title" in itemJSON.Item) ? itemJSON.Item.Title : "N/A") + "</td></tr>";
 			html_text += "<tr><td><b>Subtitle</b></td><td>" + (("Subtitle" in itemJSON.Item) ? itemJSON.Item.Subtitle : "N/A") + "</td></tr>";
 			html_text += "<tr><td><b>Price</b></td><td>" + (("CurrentPrice" in itemJSON.Item) ? Number(itemJSON.Item.CurrentPrice.Value).toFixed(2) + " USD" : "N/A") + "</td></tr>";
 			html_text += "<tr><td><b>Location</b></td><td>" + (("Location" in itemJSON.Item) && ("PostalCode" in itemJSON.Item) ? itemJSON.Item.Location + ", " + itemJSON.Item.PostalCode : "N/A") + "</td></tr>";
@@ -286,6 +312,7 @@
 			}
 
 			html_text += "</table><br><br>";
+			html_text += "<div><p>click to show seller message</p><img src=\"http://csci571.com/hw/hw6/images/arrow_down.png\"><iframe width=1000px srcdoc=\"" + itemJSON.Item.Description + "\"></iframe></div><div><p>click to show similar items</p><img src=\"http://csci571.com/hw/hw6/images/arrow_down.png\"></div>";
 
 			return html_text;
 		}
@@ -296,11 +323,11 @@
 			xml.open("GET", "http://ip-api.com/json", false);
 			xml.send();
 
-			var geoLocationJSON = JSON.parse(xml.responseText);
+			geoLocationJSON = JSON.parse(xml.responseText);
 
 			document.getElementById("submit-form").disabled = false;
 
-			submitForm();
+			buildPage();
 		}
 	</script>
 </body>
