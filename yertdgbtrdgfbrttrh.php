@@ -67,6 +67,34 @@
 			document.getElementById("product-search").submit();
 		}
 
+		function toggleSellerMessage()
+		{
+			if(document.getElementById("seller-message").alt == "down")
+			{
+				document.getElementById("seller-message").src = "http://csci571.com/hw/hw6/images/arrow_up.png";
+				document.getElementById("seller-message").alt = "up";
+			}
+			else if (document.getElementById("seller-message").alt == "up")
+			{
+				document.getElementById("seller-message").src = "http://csci571.com/hw/hw6/images/arrow_down.png";
+				document.getElementById("seller-message").alt = "down";
+			}
+		}
+
+		function toggleSimilarItems()
+		{
+			if(document.getElementById("similar-items").alt == "down")
+			{
+				document.getElementById("similar-items").src = "http://csci571.com/hw/hw6/images/arrow_up.png";
+				document.getElementById("similar-items").alt = "up";
+			}
+			else if (document.getElementById("similar-items").alt == "up")
+			{
+				document.getElementById("similar-items").src = "http://csci571.com/hw/hw6/images/arrow_down.png";
+				document.getElementById("similar-items").alt = "down";
+			}
+		}
+
 		function clearForm()
 		{
 			var fields = document.getElementsByClassName("cond-fields");
@@ -301,10 +329,10 @@
 			html_text += "<tr><td><b>Photo</b></td><td>" + (("PictureURL" in itemJSON.Item) ? "<img src=\"" + itemJSON.Item.PictureURL[0] + "\">" : "") +"</td></tr>";
 			html_text += "<tr><td><b>Title</b></td><td>" + (("Title" in itemJSON.Item) ? itemJSON.Item.Title : "N/A") + "</td></tr>";
 			html_text += "<tr><td><b>Subtitle</b></td><td>" + (("Subtitle" in itemJSON.Item) ? itemJSON.Item.Subtitle : "N/A") + "</td></tr>";
-			html_text += "<tr><td><b>Price</b></td><td>" + (("CurrentPrice" in itemJSON.Item) ? Number(itemJSON.Item.CurrentPrice.Value).toFixed(2) + " USD" : "N/A") + "</td></tr>";
+			html_text += "<tr><td><b>Price</b></td><td>" + (("CurrentPrice" in itemJSON.Item) ? Number(itemJSON.Item.CurrentPrice.Value).toFixed(2) + " " + itemJSON.Item.CurrentPrice.CurrencyID : "N/A") + "</td></tr>";
 			html_text += "<tr><td><b>Location</b></td><td>" + (("Location" in itemJSON.Item) && ("PostalCode" in itemJSON.Item) ? itemJSON.Item.Location + ", " + itemJSON.Item.PostalCode : "N/A") + "</td></tr>";
 			html_text += "<tr><td><b>Seller</b></td><td>" + (("Seller" in itemJSON.Item) ? itemJSON.Item.Seller.UserID : "N/A") + "</td></tr>";
-			html_text += "<tr><td><b>Return Policy (US)</b></td><td>" + (("ReturnPolicy" in itemJSON.Item) ? itemJSON.Item.ReturnPolicy.ReturnsAccepted : "N/A") + "</td></tr>";
+			html_text += "<tr><td><b>Return Policy (US)</b></td><td>" + (("ReturnPolicy" in itemJSON.Item) ? ((itemJSON.Item.ReturnPolicy.ReturnsAccepted == "Returns Accepted") ? "Returns accepted within " + itemJSON.Item.ReturnPolicy.ReturnsWithin : "Returns not accepted") : "N/A") + "</td></tr>";
 
 			for(var i = 0; i < itemJSON.Item.ItemSpecifics.NameValueList.length; i++)
 			{
@@ -312,7 +340,7 @@
 			}
 
 			html_text += "</table><br><br>";
-			html_text += "<div><p>click to show seller message</p><img src=\"http://csci571.com/hw/hw6/images/arrow_down.png\"><iframe width=1000px srcdoc=\"" + itemJSON.Item.Description + "\"></iframe></div><div><p>click to show similar items</p><img src=\"http://csci571.com/hw/hw6/images/arrow_down.png\"></div>";
+			html_text += "<div><p>click to show seller message</p><img id=\"seller-message\" src=\"http://csci571.com/hw/hw6/images/arrow_down.png\" alt=\"down\" onclick=\"toggleSellerMessage()\"></div><div><p>click to show similar items</p><img id=\"similar-items\" src=\"http://csci571.com/hw/hw6/images/arrow_down.png\" alt=\"down\" onclick=\"toggleSimilarItems()\"></div>";
 
 			return html_text;
 		}
