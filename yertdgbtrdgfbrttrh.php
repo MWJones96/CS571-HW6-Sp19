@@ -3,137 +3,87 @@
 <head>
 	<title>Homework 6</title>
 	<style type="text/css">
-		#main-frame
-		{
-			border: 3px solid #CACACA;
-			background-color: #FAFAFA;
-			width: 700px;
-			margin: 0 auto;
-		}
-
-		#main-frame h1
-		{
-			text-align: center;
-			margin-bottom: 15px;
-		}
-
-		#main-frame hr
-		{
-			width: 98%;
-		}
-
-		#main-frame div
-		{
-			padding-left: 15px;
-			display: flex;
-			height: 22px;
-			align-items: center;
-			margin-bottom: 5px;
-		}
-
-		#main-frame div input, select
-		{
-			height: 18px;
-			margin-left: 10px;
-		}
-
-		#main-frame div ul
-		{
-			list-style-type: none;
-			padding: 0;
-		}
-
-		#main-frame div strong
-		{
-			margin-left: 5px;
-			margin-right: 5px;
-		}
-
-		#main-frame .nearby-search
-		{
-			margin-left: 20px;
-		}
-
-		#main-frame .buttons
-		{
-			padding: 0;
-			margin: 0;
-
-			margin-bottom: 25px;
-			justify-content: center;
-		}
-
-		#main-frame .buttons input
-		{
-			width: 65px;
-			height: 25px;
-		}
-
-		#results-table
-		{
-			padding: 0;
-			margin: 0 auto;
-			width: 1000px;
-		}
-
-		#results-table, #results-table td, #results-table th
-		{
-			border: 1px solid grey;
-			border-collapse: collapse;
-		}
-
-		#results-table tr td img
-		{
-			width: 65px;
-		}
-
-		#results-table tr td a
-		{
-			text-decoration: none;
-			color: black;
-		}
-
-		#results-table tr td a:hover
-		{
-			text-shadow: 1px 1px #000;
-		}
-
-		#item-table h1
-		{
-			text-align: center;
-		}
-
-		#item-table table, #item-table table td, #item-table table tr
-		{
-			margin: auto;
-			border: 1px solid grey;
-			border-collapse: collapse;
-		}
-
-		#item-table table tr td img
-		{
-			height: 200px;
-		}
-
-		#error-bar
-		{
-			text-align: center;
-			margin: auto;
-			width: 1000px;
-			background-color: #F0F0F0;
-			border: 2px solid #E7E7E7;
-			visibility: hidden;
-		}
+		#main-frame { border: 3px solid #CACACA; background-color: #FAFAFA; width: 700px; margin: 0 auto; }
+		#main-frame h1 {text-align: center; margin-bottom: 15px; }
+		#main-frame hr { width: 98%; }
+		#main-frame div { padding-left: 15px; display: flex; height: 22px; align-items: center; margin-bottom: 5px; }
+		#main-frame div input, select{height: 18px;margin-left: 10px;}
+		#main-frame div ul{list-style-type: none;padding: 0;}
+		#main-frame div strong{margin-left: 5px;margin-right: 5px;}
+		#main-frame .nearby-search{margin-left: 20px;}
+		#main-frame .buttons{padding: 0;margin: 0;margin-bottom: 25px;justify-content: center;}
+		#main-frame .buttons input{width: 65px;height: 25px;}
+		#results-table{padding: 0;margin: 0 auto;width: 1000px;}
+		#results-table, #results-table td, #results-table th{border: 1px solid grey;border-collapse: collapse;}
+		#results-table tr td img{width: 65px;}
+		#results-table tr td a{text-decoration: none;color: black;}
+		#results-table tr td a:hover{color: grey;}
+		#item-table h1{text-align: center;}
+		#item-table table, #item-table table td, #item-table table tr{margin: auto;border: 1px solid grey;border-collapse: collapse;}
+		#item-table table tr td img{height: 200px;}
+		#error-bar{text-align: center;margin: auto;width: 1000px;background-color: #F0F0F0;border: 2px solid #E7E7E7;visibility: hidden;}
 	</style>
+	<script type="text/javascript">
+		function disableZipReq()
+		{
+			document.getElementById("zip").required = false;
+		}
+
+		function enableZipReq()
+		{
+			document.getElementById("zip").required = true;
+		}
+
+		function enableNearbySearch()
+		{
+			var checked = document.getElementById("enable-search").checked;
+
+			if (checked)
+			{
+				var fields = document.getElementsByClassName("cond-fields");
+				for (i = 0; i < fields.length; i++)
+				{
+					fields[i].disabled = 0;
+				}
+
+			}
+			else
+			{
+				var fields = document.getElementsByClassName("cond-fields");
+				for (i = 0; i < fields.length; i++)
+				{
+					fields[i].disabled = true;
+				}
+			}
+		}
+
+		function OnItemClick(itemIndex)
+		{
+			alert(itemIndex);
+		}
+
+		function clearForm()
+		{
+			var fields = document.getElementsByClassName("cond-fields");
+			for (i = 0; i < fields.length; i++)
+			{
+				fields[i].disabled = true;
+			}
+
+			document.getElementById("results-table").innerHTML = "";
+			document.getElementById("error-bar").innerHTML = "";
+			document.getElementById("error-bar").style.visibility = "hidden";
+
+			window.history.pushState({}, document.title, "/HW6/yertdgbtrdgfbrttrh.php");
+			window.location.reload();
+		}
+	</script>
 </head>
 <body>
 	<?php
 		function getJSON()
 		{
-			if (empty($_GET))
-			{
-				return '""';
-			}
+			if (empty($_GET)){return '""';}
 
 			$kwd = str_replace(' ', '%20', $_GET["keyword"]);
 			$category = ($_GET["category"] == "all") ? "" : "&categoryId={$_GET["category"]}";
@@ -141,16 +91,8 @@
 			$freeShipping = "false";
 			$localPickup = "false";
 
-			if (!isset($_GET["local"]) && !isset($_GET["free"]))
-			{
-				$freeShipping = "true";
-				$localPickup = "true";
-			}
-			else
-			{
-				if (isset($_GET["local"])) { $localPickup = "true"; }
-				if (isset($_GET["free"])) { $freeShipping = "true"; }
-			}
+			if (!isset($_GET["local"]) && !isset($_GET["free"])){$freeShipping = "true";$localPickup = "true";}
+			else{if (isset($_GET["local"])) { $localPickup = "true"; }if (isset($_GET["free"])) { $freeShipping = "true"; }}
 
 			$condition = "";
 
@@ -188,8 +130,8 @@
 
 		function getItemJSON()
 		{
-			if (!isset($_POST["itemID"])) { return '""'; }
-			$itemID = $_POST["itemID"];
+			if (!isset($_GET["itemID"])) { return '""'; }
+			$itemID = $_GET["itemID"];
 
 			$_API_URL = "http://open.api.ebay.com/shopping?callname=GetSingleItem&responseencoding=JSON&appid=MatthewJ-CS571-PRD-2f2cd4cf7-09303b6c&siteid=0&version=967&ItemID={$itemID}&IncludeSelector=Description,Details,ItemSpecifics";
 
@@ -197,7 +139,7 @@
 			return $json;
 		}
 	?>
-	<form id="main-frame" method="get">
+	<form id="main-frame" method="get" onsubmit="return true">
 		<h1><i>Product Search</i></h1>
 		<hr>
 		<div>
@@ -238,22 +180,24 @@
 					<strong>miles from</strong>
 				</td>
 				<td>
-					<input class="cond-fields" type="radio" value="here" name="location" onclick = "disableZipReq()" <?php if (!isset($_GET["nearby"])) { echo "disabled"; } ?> checked>Here</input>
+					<input class="cond-fields" type="radio" value="here" name="location" onclick = "disableZipReq()" <?php if (!isset($_GET["nearby"])) { echo "disabled"; } ?> <?php if (!isset($_GET["location"])) { echo "checked"; } else { if ($_GET["location"] == "here") { echo "checked"; } }?>>Here</input>
 				</td>
 			</tr>
 			<tr>
 				<td></td>
 				<td>
-					<input class="cond-fields" type="radio" name="location" onclick = "enableZipReq()" value="zip" <?php if (!isset($_GET["nearby"])) { echo "disabled"; } ?>></input>
+					<input class="cond-fields" type="radio" name="location" onclick = "enableZipReq()" value="zip" <?php if (!isset($_GET["nearby"])) { echo "disabled"; } ?> <?php if (isset($_GET["location"]) && $_GET["location"] == "zip") { echo "checked"; } ?>></input>
 					<input id="zip" class="cond-fields" type="textarea" name="zip" placeholder="zip code" <?php if (!isset($_GET["nearby"])) { echo "disabled"; } ?> value="<?php if (!empty($_GET["zip"])) { echo $_GET["zip"]; } ?>"></input>
 				</td>
 			</tr>
 		</table>
 		<br>
 		<div class="buttons">
-			<input id="submit-form" type="submit" name="submit" value="Search" disabled></input>
+			<input id="submit-form" type="submit" name="btnSubmit" value="Search" disabled></input>
 			<input type="reset" name="clear" value="Clear" onclick="clearForm()"></input>
 		</div>
+		<input id="itemID" type="hidden" name="itemID" disabled>
+		<input id="userLoc" type="hidden" name="userLoc">
 	</form>
 	<br>
 	<table id="results-table">
@@ -262,25 +206,36 @@
 	</div>
 	<div id="error-bar">
 	</div>
-	<form id="post-item-id" method="post" onsubmit="return false">
-		<input id="itemID" type="hidden" name="itemID">
-	</form>
 	<script type="text/javascript">
-		var geoLocationJSON = null;
 		var json = null;
-		var itemJSON = null;
 
 		function submitForm()
 		{
 			json = <?php echo getJSON(); ?>;
-			if (json == "") { return; }
+			var text = buildResultsPage(json);
 
+			if (text == "") { return; }
+
+			if (text == "Zipcode is invalid" || text == "No records have been found") 
+			{
+				document.getElementById("error-bar").innerHTML = text;
+				document.getElementById("error-bar").style.visibility = "visible";
+
+				return;
+			}
+
+			document.getElementById("results-table").innerHTML = text;
+		}
+
+		function buildResultsPage(json)
+		{
 			if (json.findItemsAdvancedResponse[0].ack[0] == "Failure")
 			{
-					document.getElementById("error-bar").innerHTML = "Zipcode is invalid";
-					document.getElementById("error-bar").style.visibility = "visible";
-
-					return;
+				return "Zipcode is invalid";
+			}
+			else if (!("item" in text.findItemsAdvancedResponse[0].searchResult[0]))
+			{
+				return "No records have been found";
 			}
 
 			var html_text = "";
@@ -294,189 +249,45 @@
 			html_text += "<th><strong>Shipping option</strong></th>";
 			html_text += "</tr>";
 
-			if (!("item" in json.findItemsAdvancedResponse[0].searchResult[0]))
-			{
-				document.getElementById("error-bar").innerHTML = "No records have been found";
-				document.getElementById("error-bar").style.visibility = "visible";
-				return;
-			}
-
 			var items = json.findItemsAdvancedResponse[0].searchResult[0].item;
 
 			for (i = 0; i < items.length; i++)
 			{
+				var index = i;
 				html_text += "<tr>";
 				html_text += "<td>" + (i+1) + "</td>";
-
-				if (("galleryURL") in items[i])
-				{
-					html_text += "<td><img src=\"" + items[i].galleryURL[0] + "\"/></td>";
-				}
-				else
-				{
-					html_text += "<td></td>";
-				}
-
-				var index = i;
-				if (("title") in items[i])
-				{
-					html_text += "<td><a href='' onclick='displayItemInfo(" + index + "); return true;'>" + items[i].title[0] + "</a></td>";
-				}
-				else
-				{
-					html_text += "<td><a href='' onclick='displayItemInfo(" + index + "); return true'>N/A</a></td>";
-				}
-
-				if (("sellingStatus") in items[i])
-				{
-					html_text += "<td>$" + Number(items[i].sellingStatus[0].currentPrice[0].__value__).toFixed(2) +"</td>";
-				}
-				else
-				{
-					html_text += "<td>N/A</td>";
-				}
-
-				if (("postalCode") in items[i])
-				{
-					html_text += "<td>" + items[i].postalCode[0] +"</td>";
-				}
-				else
-				{
-					html_text += "<td>N/A</td>";
-				}
-
-				if (("condition") in items[i])
-				{
-					html_text += "<td>" + items[i].condition[0].conditionDisplayName + "</td>";
-				}
-				else
-				{
-					html_text += "<td>N/A</td>";
-				}
-				if (("shippingInfo") in items[i])
-				{
-					html_text += "<td>" + ((Number(items[i].shippingInfo[0].shippingServiceCost[0].__value__) == 0) ? "Free Shipping" : ("$" + Number(items[i].shippingInfo[0].shippingServiceCost[0].__value__).toFixed(2))) +"</td>";
-				}
-				else
-				{
-					html_text += "<td>N/A</td>";
-				}
+				html_text += "<td><img src=\"" + ((("galleryURL") in items[i]) ? items[i].galleryURL[0] : "N/A") + "\"/></td>";
+				html_text += "<td><a href='' onclick='displayItemInfo(" + index + "); return true;'>" + ((("title") in items[i]) ? items[i].title[0] : "N/A") + "</a></td>";
+				html_text += "<td>$" + ((("sellingStatus") in items[i]) ? Number(items[i].sellingStatus[0].currentPrice[0].__value__).toFixed(2) : "N/A") +"</td>";
+				html_text += "<td>" + ((("postalCode") in items[i]) ? items[i].postalCode[0] : "N/A") +"</td>";
+				html_text += "<td>" + ((("condition") in items[i]) ? items[i].condition[0].conditionDisplayName : "N/A") + "</td>";
+				html_text += "<td>" + ((("shippingInfo") in items[i]) ? ((Number(items[i].shippingInfo[0].shippingServiceCost[0].__value__) == 0) ? "Free Shipping" : ("$" + Number(items[i].shippingInfo[0].shippingServiceCost[0].__value__).toFixed(2))) : "N/A") +"</td>";
 				html_text += "</tr>";
 			}
 
-			document.getElementById("error-bar").style.visibility = "hidden";
-			document.getElementById("results-table").innerHTML = html_text;
+			return html_text;
 		}
 
-		function displayItemInfo(index)
+		function buildItemPage(itemJSON)
 		{
-			var itemID = json.findItemsAdvancedResponse[0].searchResult[0].item[index].itemId;
-
-			document.getElementById("results-table").innerHTML = "";
-			document.getElementById("itemID").value = itemID;
-
-			document.getElementById("post-item-id").submit();
-			itemJSON = <?php echo getItemJSON(); ?>;
-
 			var html_text = "<h1><i>Item Details</i></h1><table>";
 
-			html_text += "<tr>";
-			html_text += "<td><b>Photo</b></td>";
-			html_text += "<td><img src=\"" + itemJSON.Item.PictureURL[0] + "\"/></td>";
-			html_text += "</tr>";
+			html_text += "<tr><td><b>Photo</b></td><td>" + (("PictureURL" in itemJSON.Item) ? "<img src=\"" + itemJSON.Item.PictureURL[0] + "\">" : "") +"</td></tr>";
+			html_text += "<tr><td><b>Title</b></td><td>" + (("Title" in itemJSON.Item) ? itemJSON.Item.Title ? "N/A") + "</td></tr>";
+			html_text += "<tr><td><b>Subtitle</b></td><td>" + (("Subtitle" in itemJSON.Item) ? itemJSON.Item.Subtitle : "N/A") + "</td></tr>";
+			html_text += "<tr><td><b>Price</b></td><td>" + (("CurrentPrice" in itemJSON.Item) ? Number(itemJSON.Item.CurrentPrice.Value).toFixed(2) + " USD" : "N/A") + "</td></tr>";
+			html_text += "<tr><td><b>Location</b></td><td>" + (("Location" in itemJSON.Item) && ("PostalCode" in itemJSON.Item) ? itemJSON.Item.Location + ", " + itemJSON.Item.PostalCode : "N/A") + "</td></tr>";
+			html_text += "<tr><td><b>Seller</b></td><td>" + (("Seller" in itemJSON.Item) ? itemJSON.Item.Seller.UserID : "N/A") + "</td></tr>";
+			html_text += "<tr><td><b>Return Policy (US)</b></td><td>" + (("ReturnPolicy" in itemJSON.Item) ? itemJSON.Item.ReturnPolicy.ReturnsAccepted : "N/A") + "</td></tr>";
 
-			html_text += "<tr>";
-			html_text += "<td><b>Title</b></td>";
-			html_text += "<td>" + itemJSON.Item.Title + "</td>";
-			html_text += "</tr>";
-
-			html_text += "<tr>";
-			html_text += "<td><b>Subtitle</b></td>";
-			html_text += "<td>" + (("Subtitle" in itemJSON.Item) ?itemJSON.Item.Subtitle : "N/A") + "</td>";
-			html_text += "</tr>";
-
-			html_text += "<tr>";
-			html_text += "<td><b>Price</b></td>";
-			html_text += "<td>$" + Number(itemJSON.Item.CurrentPrice.Value).toFixed(2) + "</td>";
-			html_text += "</tr>";
-
-			html_text += "<tr>";
-			html_text += "<td><b>Location</b></td>";
-			html_text += "<td>" + itemJSON.Item.Location + ", " + itemJSON.Item.PostalCode + "</td>";
-			html_text += "</tr>";
-
-			html_text += "<tr>";
-			html_text += "<td><b>Seller</b></td>";
-			html_text += "<td>" + itemJSON.Item.Seller.UserID + "</td>";
-			html_text += "</tr>";
-
-			html_text += "<tr>";
-			html_text += "<td><b>Return Policy (US)</b></td>";
-			html_text += "<td>" + itemJSON.Item.ReturnPolicy.ReturnsAccepted + "</td>";
-			html_text += "</tr>";
-
-			var i = 0;
-			for(i=0;i<itemJSON.Item.ItemSpecifics.NameValueList.length;i++)
+			for(var i = 0; i < itemJSON.Item.ItemSpecifics.NameValueList.length; i++)
 			{
-				html_text += "<tr>";
-				html_text += "<td><b>" + itemJSON.Item.ItemSpecifics.NameValueList[i].Name + "</b></td>";
-				html_text += "<td>" + itemJSON.Item.ItemSpecifics.NameValueList[i].Value[0] + "</td>";
-				html_text += "</tr>";
+				html_text += "<tr><td><b>" + itemJSON.Item.ItemSpecifics.NameValueList[i].Name + "</b></td><td>" + itemJSON.Item.ItemSpecifics.NameValueList[i].Value[0] + "</td></tr>";
 			}
 
 			html_text += "</table><br><br>";
 
-			document.getElementById("item-table").innerHTML = html_text;
-			document.getElementById("item-table").visibility = "visible";
-		}
-
-		function disableZipReq()
-		{
-			document.getElementById("zip").required = false;
-		}
-
-		function enableZipReq()
-		{
-			document.getElementById("zip").required = true;
-		}
-
-		function enableNearbySearch()
-		{
-			var checked = document.getElementById("enable-search").checked;
-
-			if (checked)
-			{
-				var fields = document.getElementsByClassName("cond-fields");
-				for (i = 0; i < fields.length; i++)
-				{
-					fields[i].disabled = 0;
-				}
-
-			}
-			else
-			{
-				var fields = document.getElementsByClassName("cond-fields");
-				for (i = 0; i < fields.length; i++)
-				{
-					fields[i].disabled = true;
-				}
-			}
-		}
-
-		function clearForm()
-		{
-			var fields = document.getElementsByClassName("cond-fields");
-			for (i = 0; i < fields.length; i++)
-			{
-				fields[i].disabled = true;
-			}
-
-			document.getElementById("results-table").innerHTML = "";
-			document.getElementById("error-bar").innerHTML = "";
-			document.getElementById("error-bar").style.visibility = "hidden";
-
-			window.history.pushState({}, document.title, "/HW6/yertdgbtrdgfbrttrh.php");
-			window.location.reload();
+			return html_text;
 		}
 
 		window.onload = function() {
@@ -484,7 +295,8 @@
 
 			xml.open("GET", "http://ip-api.com/json", false);
 			xml.send();
-			geoLocationJSON = JSON.parse(xml.responseText);
+
+			var geoLocationJSON = JSON.parse(xml.responseText);
 
 			document.getElementById("submit-form").disabled = false;
 
