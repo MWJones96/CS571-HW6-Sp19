@@ -73,11 +73,13 @@
 			{
 				document.getElementById("seller-message").src = "http://csci571.com/hw/hw6/images/arrow_up.png";
 				document.getElementById("seller-message").alt = "up";
+				document.getElementById("seller-text").innerHTML = "click to hide seller message";
 			}
 			else if (document.getElementById("seller-message").alt == "up")
 			{
 				document.getElementById("seller-message").src = "http://csci571.com/hw/hw6/images/arrow_down.png";
 				document.getElementById("seller-message").alt = "down";
+				document.getElementById("seller-text").innerHTML = "click to show seller message";
 			}
 		}
 
@@ -87,11 +89,17 @@
 			{
 				document.getElementById("similar-items").src = "http://csci571.com/hw/hw6/images/arrow_up.png";
 				document.getElementById("similar-items").alt = "up";
+				document.getElementById("similar-text").innerHTML = "click to hide similar items";
+				document.getElementById("similar-items-frame").height = "200px";
+				document.getElementById("similar-items-frame").style = "visibility: visible";
 			}
 			else if (document.getElementById("similar-items").alt == "up")
 			{
 				document.getElementById("similar-items").src = "http://csci571.com/hw/hw6/images/arrow_down.png";
 				document.getElementById("similar-items").alt = "down";
+				document.getElementById("similar-text").innerHTML = "click to show similar items";
+				document.getElementById("similar-items-frame").height = "0px";
+				document.getElementById("similar-items-frame").style = "visibility: hidden";
 			}
 		}
 
@@ -171,6 +179,16 @@
 			$itemID = $_GET["itemID"];
 
 			$_API_URL = "http://open.api.ebay.com/shopping?callname=GetSingleItem&responseencoding=JSON&appid=MatthewJ-CS571-PRD-2f2cd4cf7-09303b6c&siteid=0&version=967&ItemID={$itemID}&IncludeSelector=Description,Details,ItemSpecifics";
+
+			$json = file_get_contents($_API_URL);
+			return $json;
+		}
+
+		function getSimilarItems()
+		{
+			$itemID = $_GET["itemID"];
+
+			$_API_URL = "http://svcs.ebay.com/MerchandisingService?OPERATION-NAME=getSimilarItems&SERVICE-NAME=MerchandisingService&SERVICE-VERSION=1.1.0&CONSUMER-ID=MatthewJ-CS571-PRD-2f2cd4cf7-09303b6c&RESPONSE-DATA-FORMAT=JSON&REST-PAYLOAD&itemId={$itemID}&maxResults=8";
 
 			$json = file_get_contents($_API_URL);
 			return $json;
@@ -322,6 +340,25 @@
 			return html_text;
 		}
 
+		function getSimilarItemsHTML()
+		{
+			var similarItemsJSON = <?php echo getSimilarItems(); ?>;
+			var similarItems = similarItemsJSON.getSimilarItemsResponse.itemRecommendations.item;
+
+			if (similarItems.length == 0)
+			{
+				return "<h1>No similar items found</h1>";
+			}
+
+			var html_text = "";
+			for (var i = 0; i < similarItems.length; i++)
+			{
+				html_text += "<div><a href='#'>" + similarItems[i].title + "</a><p><b>$" + similarItems[i].buyItNowPrice.__value__ + "</b></p></div>";
+			}
+
+			return html_text;
+		}
+
 		function buildItemPage(itemJSON)
 		{
 			var html_text = "<h1><i>Item Details</i></h1><table>";
@@ -332,15 +369,17 @@
 			html_text += "<tr><td><b>Price</b></td><td>" + (("CurrentPrice" in itemJSON.Item) ? Number(itemJSON.Item.CurrentPrice.Value).toFixed(2) + " " + itemJSON.Item.CurrentPrice.CurrencyID : "N/A") + "</td></tr>";
 			html_text += "<tr><td><b>Location</b></td><td>" + (("Location" in itemJSON.Item) && ("PostalCode" in itemJSON.Item) ? itemJSON.Item.Location + ", " + itemJSON.Item.PostalCode : "N/A") + "</td></tr>";
 			html_text += "<tr><td><b>Seller</b></td><td>" + (("Seller" in itemJSON.Item) ? itemJSON.Item.Seller.UserID : "N/A") + "</td></tr>";
-			html_text += "<tr><td><b>Return Policy (US)</b></td><td>" + (("ReturnPolicy" in itemJSON.Item) ? ((itemJSON.Item.ReturnPolicy.ReturnsAccepted == "Returns Accepted") ? "Returns accepted within " + itemJSON.Item.ReturnPolicy.ReturnsWithin : "Returns not accepted") : "N/A") + "</td></tr>";
+			html_text += "<tr><td><b>Return Policy (US)</b></td><td>" + (("ReturnPolicy" in itemJSON.Item) ? ((itemJSON.Item.ReturnPolicy.ReturnsAccepted == "Returns Accepted") ? "Returns accepted within " + itemJSON.Item.ReturnPolicy.ReturnsWithin.toLowerCase() : "Returns not accepted") : "N/A") + "</td></tr>";
 
 			for(var i = 0; i < itemJSON.Item.ItemSpecifics.NameValueList.length; i++)
 			{
 				html_text += "<tr><td><b>" + itemJSON.Item.ItemSpecifics.NameValueList[i].Name + "</b></td><td>" + itemJSON.Item.ItemSpecifics.NameValueList[i].Value[0] + "</td></tr>";
 			}
 
+			var similarItemsHTML = getSimilarItemsHTML();
+
 			html_text += "</table><br><br>";
-			html_text += "<div><p>click to show seller message</p><img id=\"seller-message\" src=\"http://csci571.com/hw/hw6/images/arrow_down.png\" alt=\"down\" onclick=\"toggleSellerMessage()\"></div><div><p>click to show similar items</p><img id=\"similar-items\" src=\"http://csci571.com/hw/hw6/images/arrow_down.png\" alt=\"down\" onclick=\"toggleSimilarItems()\"></div>";
+			html_text += "<div><p id=\"seller-text\">click to show seller message</p><img id=\"seller-message\" src=\"http://csci571.com/hw/hw6/images/arrow_down.png\" alt=\"down\" onclick=\"toggleSellerMessage()\"></div><div><p id=\"similar-text\">click to show similar items</p><img id=\"similar-items\" src=\"http://csci571.com/hw/hw6/images/arrow_down.png\" alt=\"down\" onclick=\"toggleSimilarItems()\"><iframe style=\"visibility: hidden;\"; id=\"similar-items-frame\" margin=\"auto\" width=\"800px\" height=\"0px\" srcdoc=\"" + similarItemsHTML + "\"></iframe></div>";
 
 			return html_text;
 		}
