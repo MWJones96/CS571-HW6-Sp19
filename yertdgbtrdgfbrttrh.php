@@ -16,7 +16,7 @@
 		#results-table {padding: 0; margin: 0 auto; width: 1000px; }
 		#results-table table, #results-table table td, #results-table table th {border: 1px solid grey; border-collapse: collapse; }
 		#results-table table tr td img { width: 65px; }
-		#results-table table tr td a {text-decoration: none; color: black; }
+		#results-table table tr td a { text-decoration: none; color: black; }
 		#results-table table tr td a:hover { color: grey; }
 		#item-table div { text-align: center; }
 		#item-table div img { width: 50px; }
@@ -28,7 +28,10 @@
 		#seller-message-html { width: 1000px;}
 		.arrow-text { color: grey;  }
 		#seller-message-html { display: block; margin: auto; height: 100%; border: none; }
-		#similar-items-table tr { visibility: hidden; }
+		#similar-items-table { text-align: center; }
+		#similar-items-table tr td img { height: 2px; }
+		#similar-items-table tr td a { text-decoration: none; color: black; }
+		#similar-items-table tr td a:hover { color: grey; }
 	</style>
 	<script type="text/javascript">
 		function disableZipReq()
@@ -70,6 +73,13 @@
 			document.getElementById("product-search").submit();
 		}
 
+		function OnSimilarItemClick(itemID)
+		{
+			document.getElementById("itemID").value = itemID;
+			document.getElementById("userZip").value = geoLocationJSON.zip;
+			document.getElementById("product-search").submit();
+		}
+
 		function toggleSellerMessage()
 		{
 			if(document.getElementById("seller-message").alt == "down")
@@ -102,7 +112,6 @@
 				document.getElementById("similar-items").src = "http://csci571.com/hw/hw6/images/arrow_down.png";
 				document.getElementById("similar-items").alt = "down";
 				document.getElementById("similar-text").innerHTML = "click to show similar items";
-				document.getElementById("similar-items-table").height = "0px";
 				document.getElementById("similar-items-table").style = "visibility: hidden; height: 0px;";
 			}
 		}
@@ -301,7 +310,7 @@
 			{
 				text = buildResultsPage(json);
 
-				if (text == "Zipcode is invalid" || text == "No records have been found") 
+				if (text == "Zipcode is invalid" || text == "No records have been found" || text == "Item has expired") 
 				{
 					document.getElementById("error-bar").innerHTML = text;
 					document.getElementById("error-bar").style.visibility = "visible";
@@ -371,17 +380,39 @@
 				return "<h1>No similar items found</h1>";
 			}
 
-			var html_text = "";
-			for (var i = 0; i < 3; i++)
+			var html_text = "<tr>";
+			for (var i=0; i < similarItems.length; i++)
 			{
-				html_text += "<tr>Row<tr>";
+				html_text += "<td><img src=\"" + similarItems[i].imageURL + "\"/></td>";
 			}
+			html_text += "</tr>";
+
+			html_text += "<tr>";
+			for (var i=0; i < similarItems.length; i++)
+			{
+				html_text += "<td><a href=\"#\" onclick=\"OnSimilarItemClick(" + similarItems[i].itemId + ")\">" + similarItems[i].title + "</a></td>";
+			}
+			html_text += "</tr>";
+
+			html_text += "<tr>";
+			for (var i=0; i < similarItems.length; i++)
+			{
+				html_text += "<td><b>$" + similarItems[i].buyItNowPrice.__value__ + "<b></td>";
+			}
+			html_text += "</tr>";
 
 			return html_text;
 		}
 
 		function buildItemPage(itemJSON)
 		{
+
+			//Item has expired
+			if (!("Item" in itemJSON))
+			{
+				return "Item has expired";
+			}
+
 			var html_text = "<h1><i>Item Details</i></h1><table>";
 
 			html_text += "<tr><td><b>Photo</b></td><td>" + (("PictureURL" in itemJSON.Item) ? "<img src=\"" + itemJSON.Item.PictureURL[0] + "\">" : "") +"</td></tr>";
