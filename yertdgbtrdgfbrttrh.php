@@ -33,6 +33,7 @@
 		#similar-items-table table tr td img { height: auto; width: 10vw; }
 		#similar-items-table table tr td a { text-decoration: none; color: black; }
 		#similar-items-table table tr td a:hover { color: grey; }
+        #seller-message-html iframe { border: none; width: 1000px; height: auto; }
 	</style>
 	<script type="text/javascript">
 		function disableZipReq()
@@ -90,6 +91,8 @@
 					document.getElementById("seller-message").alt = "down";
 					document.getElementById("seller-message").src = "http://csci571.com/hw/hw6/images/arrow_down.png";
 					document.getElementById("seller-text").innerHTML = "click to show seller message";
+                    
+                    document.getElementById("seller-message-html").style.display = "none";
 				}
 				else
 				{
@@ -102,6 +105,8 @@
 					document.getElementById("similar-text").innerHTML = "click to show similar items";
                     
                     document.getElementById("similar-items-table").style.display = "none";
+                    
+                    document.getElementById("seller-message-html").style.display = "block";
 				}
 			}
 			else
@@ -125,6 +130,8 @@
 					document.getElementById("seller-text").innerHTML = "click to show seller message";
                     
                     document.getElementById("similar-items-table").style.display = "block";
+                    
+                    document.getElementById("seller-message-html").style.display = "none";
 				}
 			}
 		}
@@ -343,8 +350,8 @@
 
 					return;
 				}
-
-				document.getElementById("item-table").innerHTML = text;
+                
+                document.getElementById("item-table").innerHTML = text;
 			}
 		}
 
@@ -435,13 +442,24 @@
 
 			var html_text = "<h1><i>Item Details</i></h1><table>";
 
-			html_text += "<tr><td><b>Photo</b></td><td>" + (("PictureURL" in itemJSON.Item) ? "<img src=\"" + itemJSON.Item.PictureURL[0] + "\">" : "") +"</td></tr>";
-			html_text += "<tr><td><b>Title</b></td><td>" + (("Title" in itemJSON.Item) ? itemJSON.Item.Title : "N/A") + "</td></tr>";
-			html_text += "<tr><td><b>Subtitle</b></td><td>" + (("Subtitle" in itemJSON.Item) ? itemJSON.Item.Subtitle : "N/A") + "</td></tr>";
-			html_text += "<tr><td><b>Price</b></td><td>" + (("CurrentPrice" in itemJSON.Item) ? Number(itemJSON.Item.CurrentPrice.Value).toFixed(2) + " " + itemJSON.Item.CurrentPrice.CurrencyID : "N/A") + "</td></tr>";
-			html_text += "<tr><td><b>Location</b></td><td>" + (("Location" in itemJSON.Item) && ("PostalCode" in itemJSON.Item) ? itemJSON.Item.Location + ", " + itemJSON.Item.PostalCode : "N/A") + "</td></tr>";
-			html_text += "<tr><td><b>Seller</b></td><td>" + (("Seller" in itemJSON.Item) ? itemJSON.Item.Seller.UserID : "N/A") + "</td></tr>";
-			html_text += "<tr><td><b>Return Policy (US)</b></td><td>" + (("ReturnPolicy" in itemJSON.Item) ? ((itemJSON.Item.ReturnPolicy.ReturnsAccepted == "Returns Accepted") ? "Returns accepted within " + itemJSON.Item.ReturnPolicy.ReturnsWithin.toLowerCase() : "Returns not accepted") : "N/A") + "</td></tr>";
+            if ("PictureURL" in itemJSON.Item) { html_text += "<tr><td><b>Photo</b></td><td><img src=\"" + itemJSON.Item.PictureURL[0] + "\"></td></tr>"; }
+            
+            if ("Title" in itemJSON.Item) { html_text += "<tr><td><b>Title</b></td><td>" + itemJSON.Item.Title + "</td></tr>"; }
+            
+            if ("Subtitle" in itemJSON.Item) { html_text += "<tr><td><b>Subtitle</b></td><td>" + itemJSON.Item.Subtitle + "</td></tr>"; }
+            
+            if ("CurrentPrice" in itemJSON.Item) { html_text += "<tr><td><b>Price</b></td><td>" + Number(itemJSON.Item.CurrentPrice.Value).toFixed(2) + " " + itemJSON.Item.CurrentPrice.CurrencyID + "</td></tr>"; }
+            
+            if ("Location" in itemJSON.Item) { html_text += "<tr><td><b>Location</b></td><td>" + itemJSON.Item.Location; if ("PostalCode" in itemJSON.Item) { html_text += ", " + itemJSON.Item.PostalCode; } html_text += "</td></tr>"; }
+            
+            if ("Seller" in itemJSON.Item && "UserID" in itemJSON.Item.Seller) { html_text += "<tr><td><b>Seller</b></td><td>" + itemJSON.Item.Seller.UserID + "</td></tr>"; }
+            
+            if ("ReturnPolicy" in itemJSON.Item && "ReturnsAccepted" in itemJSON.Item.ReturnPolicy) 
+            { 
+                html_text += "<tr><td><b>Return Policy (US)</b></td><td>" +  ((itemJSON.Item.ReturnPolicy.ReturnsAccepted == "ReturnsNotAccepted") ? "Returns not accepted" : "Returns accepted" + ("ReturnsWithin" in itemJSON.Item.ReturnPolicy ? " within " + itemJSON.Item.ReturnPolicy.ReturnsWithin.toLowerCase() : ""));
+                
+                html_text += "</td></tr>";
+            }
 
 			if ("ItemSpecifics" in itemJSON.Item)
 			{
@@ -450,14 +468,24 @@
 					html_text += "<tr><td><b>" + itemJSON.Item.ItemSpecifics.NameValueList[i].Name + "</b></td><td>" + itemJSON.Item.ItemSpecifics.NameValueList[i].Value[0] + "</td></tr>";
 				}
 			}
+            
+            html_text += "</table>";
 
 			var similarItemsHTML = getSimilarItemsHTML();
 
-			html_text += "</table>";
-
 			html_text += "<div id=\"seller-msg\"><p id=\"seller-text\" class=\"arrow-text\">click to show seller message</p><img id=\"seller-message\" src=\"http://csci571.com/hw/hw6/images/arrow_down.png\" alt=\"down\" onclick=\"toggleDropdown(0)\"/>";
-
-			//html_text += (("Description" in json.Item && json.Item.Description.length > 0) ? "<iframe id=\"seller-message-html\" align=\"middle\" style=\"visibility: hidden; height: 0px;\" srcdoc=\"" + json.Item.Description + "\"/></iframe></div>" : "<div id=\"seller-message-error\" class=\"error-bar\">No seller message found</div>");
+            
+            html_text += "<div id=\"seller-message-html\" style=\"display: none;\">";
+            if ("Description" in json.Item && json.Item.Description.length > 0)
+            {
+                html_text += "<iframe id='seller-frame' srcdoc='" + json.Item.Description + "' onload=\"this.style.height=1000px;\"></iframe>";
+            }
+            else
+            {
+                html_text += "<div class=\"error-bar\">No seller message found</div>";
+            }
+            
+            html_text += "</div>";
 
 			html_text += "<div><p id=\"similar-text\" class=\"arrow-text\">click to show similar items</p><img id=\"similar-items\" src=\"http://csci571.com/hw/hw6/images/arrow_down.png\" alt=\"down\" onclick=\"toggleDropdown(1)\"></div>";
 
