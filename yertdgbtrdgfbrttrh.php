@@ -28,10 +28,11 @@
 		#seller-message-html { width: 1000px;}
 		.arrow-text { color: grey;  }
 		#seller-message-html { display: block; margin: auto; height: 100%; border: none; }
-		#similar-items-table { text-align: center; }
-		#similar-items-table tr td img { height: 2px; }
-		#similar-items-table tr td a { text-decoration: none; color: black; }
-		#similar-items-table tr td a:hover { color: grey; }
+		#similar-items-table table, #similar-items-table table tr, #similar-items-table table tr td { text-align: center; border: none; outline: none; border-collapse: collapse; }
+		#similar-items-table table tr td { width: 10vw; }
+		#similar-items-table table tr td img { height: auto; width: 10vw; }
+		#similar-items-table table tr td a { text-decoration: none; color: black; }
+		#similar-items-table table tr td a:hover { color: grey; }
 	</style>
 	<script type="text/javascript">
 		function disableZipReq()
@@ -53,7 +54,7 @@
 				var fields = document.getElementsByClassName("cond-fields");
 				for (i = 0; i < fields.length; i++)
 				{
-					fields[i].disabled = 0;
+					fields[i].disabled = false;
 				}
 			}
 			else
@@ -80,39 +81,51 @@
 			document.getElementById("product-search").submit();
 		}
 
-		function toggleSellerMessage()
+		function toggleDropdown(index)
 		{
-			if(document.getElementById("seller-message").alt == "down")
+			if (index == 0)
 			{
-				document.getElementById("seller-message").src = "http://csci571.com/hw/hw6/images/arrow_up.png";
-				document.getElementById("seller-message").alt = "up";
-				document.getElementById("seller-text").innerHTML = "click to hide seller message";
-				document.getElementById("seller-message-html").style = "visibility: visible; height: 500px;";
-			}
-			else if (document.getElementById("seller-message").alt == "up")
-			{
-				document.getElementById("seller-message").src = "http://csci571.com/hw/hw6/images/arrow_down.png";
-				document.getElementById("seller-message").alt = "down";
-				document.getElementById("seller-text").innerHTML = "click to show seller message";
-				document.getElementById("seller-message-html").style = "visibility: hidden; height: 0px";
-			}
-		}
+				if (document.getElementById("seller-message").alt == "up")
+				{
+					document.getElementById("seller-message").alt = "down";
+					document.getElementById("seller-message").src = "http://csci571.com/hw/hw6/images/arrow_down.png";
+					document.getElementById("seller-text").innerHTML = "click to show seller message";
+				}
+				else
+				{
+					document.getElementById("seller-message").alt = "up";
+					document.getElementById("seller-message").src = "http://csci571.com/hw/hw6/images/arrow_up.png";
+					document.getElementById("seller-text").innerHTML = "click to hide seller message";
 
-		function toggleSimilarItems()
-		{
-			if(document.getElementById("similar-items").alt == "down")
-			{
-				document.getElementById("similar-items").src = "http://csci571.com/hw/hw6/images/arrow_up.png";
-				document.getElementById("similar-items").alt = "up";
-				document.getElementById("similar-text").innerHTML = "click to hide similar items";
-				document.getElementById("similar-items-table").style = "visibility: visible; height: 200px;";
+					document.getElementById("similar-items").alt = "down";
+					document.getElementById("similar-items").src = "http://csci571.com/hw/hw6/images/arrow_down.png";
+					document.getElementById("similar-text").innerHTML = "click to show similar items";
+                    
+                    document.getElementById("similar-items-table").style.display = "none";
+				}
 			}
-			else if (document.getElementById("similar-items").alt == "up")
+			else
 			{
-				document.getElementById("similar-items").src = "http://csci571.com/hw/hw6/images/arrow_down.png";
-				document.getElementById("similar-items").alt = "down";
-				document.getElementById("similar-text").innerHTML = "click to show similar items";
-				document.getElementById("similar-items-table").style = "visibility: hidden; height: 0px;";
+				if (document.getElementById("similar-items").alt == "up")
+				{
+					document.getElementById("similar-items").alt = "down";
+					document.getElementById("similar-items").src = "http://csci571.com/hw/hw6/images/arrow_down.png";
+					document.getElementById("similar-text").innerHTML = "click to show similar items";
+                    
+                    document.getElementById("similar-items-table").style.display = "none";
+				}
+				else
+				{
+					document.getElementById("similar-items").alt = "up";
+					document.getElementById("similar-items").src = "http://csci571.com/hw/hw6/images/arrow_up.png";
+					document.getElementById("similar-text").innerHTML = "click to hide similar items";
+
+					document.getElementById("seller-message").alt = "down";
+					document.getElementById("seller-message").src = "http://csci571.com/hw/hw6/images/arrow_down.png";
+					document.getElementById("seller-text").innerHTML = "click to show seller message";
+                    
+                    document.getElementById("similar-items-table").style.display = "block";
+				}
 			}
 		}
 
@@ -310,7 +323,7 @@
 			{
 				text = buildResultsPage(json);
 
-				if (text == "Zipcode is invalid" || text == "No records have been found" || text == "Item has expired") 
+				if (text == "Zipcode is invalid" || text == "No records have been found") 
 				{
 					document.getElementById("error-bar").innerHTML = text;
 					document.getElementById("error-bar").style.visibility = "visible";
@@ -323,6 +336,14 @@
 			else
 			{
 				text = buildItemPage(json);
+				if (text == "Item has expired")
+				{
+					document.getElementById("error-bar").innerHTML = text;
+					document.getElementById("error-bar").style.visibility = "visible";
+
+					return;
+				}
+
 				document.getElementById("item-table").innerHTML = text;
 			}
 		}
@@ -380,7 +401,7 @@
 				return "<h1>No similar items found</h1>";
 			}
 
-			var html_text = "<tr>";
+			var html_text = "<table><tr>";
 			for (var i=0; i < similarItems.length; i++)
 			{
 				html_text += "<td><img src=\"" + similarItems[i].imageURL + "\"/></td>";
@@ -399,14 +420,13 @@
 			{
 				html_text += "<td><b>$" + similarItems[i].buyItNowPrice.__value__ + "<b></td>";
 			}
-			html_text += "</tr>";
+			html_text += "</tr></table>";
 
 			return html_text;
 		}
 
 		function buildItemPage(itemJSON)
 		{
-
 			//Item has expired
 			if (!("Item" in itemJSON))
 			{
@@ -435,13 +455,13 @@
 
 			html_text += "</table>";
 
-			html_text += "<div id=\"seller-msg\"><p id=\"seller-text\" class=\"arrow-text\">click to show seller message</p><img id=\"seller-message\" src=\"http://csci571.com/hw/hw6/images/arrow_down.png\" alt=\"down\" onclick=\"toggleSellerMessage()\"/>";
+			html_text += "<div id=\"seller-msg\"><p id=\"seller-text\" class=\"arrow-text\">click to show seller message</p><img id=\"seller-message\" src=\"http://csci571.com/hw/hw6/images/arrow_down.png\" alt=\"down\" onclick=\"toggleDropdown(0)\"/>";
 
-			html_text += (("Description" in json.Item && json.Item.Description.length > 0) ? "<iframe id=\"seller-message-html\" align=\"middle\" style=\"visibility: hidden; height: 0px;\" srcdoc=\"" + json.Item.Description + "\"/></iframe></div>" : "<div id=\"seller-message-error\" class=\"error-bar\">No seller message found</div>");
+			//html_text += (("Description" in json.Item && json.Item.Description.length > 0) ? "<iframe id=\"seller-message-html\" align=\"middle\" style=\"visibility: hidden; height: 0px;\" srcdoc=\"" + json.Item.Description + "\"/></iframe></div>" : "<div id=\"seller-message-error\" class=\"error-bar\">No seller message found</div>");
 
-			html_text += "<div><p id=\"similar-text\" class=\"arrow-text\">click to show similar items</p><img id=\"similar-items\" src=\"http://csci571.com/hw/hw6/images/arrow_down.png\" alt=\"down\" onclick=\"toggleSimilarItems()\"></div>";
+			html_text += "<div><p id=\"similar-text\" class=\"arrow-text\">click to show similar items</p><img id=\"similar-items\" src=\"http://csci571.com/hw/hw6/images/arrow_down.png\" alt=\"down\" onclick=\"toggleDropdown(1)\"></div>";
 
-			html_text += "<table id=\"similar-items-table\" style=\"visibility: hidden;\">" + similarItemsHTML + "</table>";
+			html_text += "<div id=\"similar-items-table\" style=\"display: none;\">" + similarItemsHTML + "</div>";
 
 			return html_text;
 		}
