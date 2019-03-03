@@ -187,16 +187,10 @@
 
 			if ($_GET["itemID"] != "0") { return getItemJSON(); }
 
+            $index = 0;
 			$kwd = rawurlencode($_GET["keyword"]);
 			$category = ($_GET["category"] == "all") ? "" : "&categoryId={$_GET["category"]}";
 
-			$freeShipping = "false";
-			$localPickup = "false";
-
-			if (!isset($_GET["local"]) && !isset($_GET["free"])) { $freeShipping = "true"; $localPickup = "true" ;}
-			else { if (isset($_GET["local"])) { $localPickup = "true"; } if (isset($_GET["free"])) { $freeShipping = "true"; }}
-
-			$index = 0;
 			$nearby_search = "";
 
 			//Nearby search enabled
@@ -216,22 +210,19 @@
 				$index++;
 			}
 
-			$shipping_options = "&itemFilter({$index}).name=FreeShippingOnly&itemFilter({$index}).value={$freeShipping}";
-			$index++;
-			$pickup_options = "&itemFilter({$index}).name=LocalPickupOnly&itemFilter({$index}).value={$localPickup}";
-			$index++;
+            $shippingAndLocal = "";
+            if (isset($_GET["free"])) { $shippingAndLocal .= "&itemFilter({$index}).name=FreeShippingOnly&itemFilter({$index}).value=true"; $index++; }
+            if (isset($_GET["local"])) { $shippingAndLocal .= "&itemFilter({$index}).name=LocalPickupOnly&itemFilter({$index}).value=true"; $index++; }
+            
 			$duplicate = "&itemFilter({$index}).name=HideDuplicateItems&itemFilter({$index}).value=true";
 			$index++;
 
-			$condition = "&itemFilter({$index}).name=Condition";
+			$condition = "";
 
-			if (!isset($_GET["new"]) && !isset($_GET["used"]) && !isset($_GET["unspec"]))
+			if (isset($_GET["new"]) || isset($_GET["used"]) || isset($_GET["unspec"]))
 			{
-				$condition .= "&itemFilter({$index}).value(0)=New&itemFilter({$index}).value(1)=Used&itemFilter({$index}).value(2)=Unspecified";
-				$index++;
-			}
-			else
-			{
+                $condition .= "&itemFilter({$index}).name=Condition";
+                
 				$subIndex = 0;
 				if (isset($_GET["new"])) { $condition .= "&itemFilter({$index}).value({$subIndex})=New"; $subIndex++; }
 				if (isset($_GET["used"])) { $condition .= "&itemFilter({$index}).value({$subIndex})=Used"; $subIndex++; }
@@ -240,7 +231,7 @@
 			}
 
 			//Builds URL for the API call with the data the user provides
-			$_API_URL = "http://svcs.ebay.com/services/search/FindingService/v1?OPERATION-NAME=findItemsAdvanced&SERVICE-VERSION=1.0.0&SECURITY-APPNAME=MatthewJ-CS571-PRD-2f2cd4cf7-09303b6c&RESPONSE-DATA-FORMAT=JSON&REST-PAYLOAD&paginationInput.entriesPerPage=20&keywords={$kwd}{$category}{$nearby_search}{$shipping_options}{$pickup_options}{$duplicate}{$condition}";
+			$_API_URL = "http://svcs.ebay.com/services/search/FindingService/v1?OPERATION-NAME=findItemsAdvanced&SERVICE-VERSION=1.0.0&SECURITY-APPNAME=MatthewJ-CS571-PRD-2f2cd4cf7-09303b6c&RESPONSE-DATA-FORMAT=JSON&REST-PAYLOAD&paginationInput.entriesPerPage=20&keywords={$kwd}{$category}{$nearby_search}{$shippingAndLocal}{$duplicate}{$condition}";
 
 			//Call API
 			$json = file_get_contents($_API_URL);
@@ -325,7 +316,7 @@
 		<br>
 		<div class="buttons">
 			<input id="submit-form" type="submit" name="btnSubmit" value="Search" onclick="submitForm()" disabled></input>
-			<input type="reset" name="clear" value="Clear" onclick="clearForm()"></input>
+			<input type="button" name="clear" value="Clear" onclick="clearForm()"></input>
 		</div>
 		<input id="itemID" type="hidden" name="itemID" value=0>
 		<input id="userZip" type="hidden" name="userZip">
@@ -415,7 +406,7 @@
 				html_text += "<td>$" + ((("sellingStatus") in items[i]) ? items[i].sellingStatus[0].currentPrice[0].__value__ : "N/A") +"</td>";
 				html_text += "<td>" + ((("postalCode") in items[i]) ? items[i].postalCode[0] : "N/A") +"</td>";
 				html_text += "<td>" + ((("condition") in items[i]) ? items[i].condition[0].conditionDisplayName : "N/A") + "</td>";
-				html_text += "<td>" + ((("shippingInfo") in items[i]) ? ((Number(items[i].shippingInfo[0].shippingServiceCost[0].__value__) == 0) ? "Free Shipping" : ("$" + Number(items[i].shippingInfo[0].shippingServiceCost[0].__value__).toFixed(2))) : "N/A") +"</td>";
+				html_text += "<td>" + ((("shippingInfo") in items[i] && ("shippingServiceCost" in items[i].shippingInfo[0] && "__value__" in items[i].shippingInfo[0].shippingServiceCost[0])) ? ((Number(items[i].shippingInfo[0].shippingServiceCost[0].__value__) == 0) ? "Free Shipping" : ("$" + items[i].shippingInfo[0].shippingServiceCost[0].__value__)) : "N/A") +"</td>";
 				html_text += "</tr>";
 			}
 
