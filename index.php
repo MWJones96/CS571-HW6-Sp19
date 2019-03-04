@@ -27,10 +27,10 @@
 		.error-bar { text-align: center; margin: auto; width: 1000px; background-color: #F0F0F0; border: 2px solid #E7E7E7; visibility: hidden; }
 		.arrow-text { color: grey;  }
         iframe { border: none; overflow: hidden; margin: 0; height: 100%; }
-        #similar-items-table table { border: 1px solid black; }
+        #similar-items-table table { border: 1px solid black; overflow-x: scroll; width: 600px; display: block; }
 		#similar-items-table table tr, #similar-items-table table tr td { text-align: center; border: none; outline: none; border-collapse: collapse; }
 		#similar-items-table table tr td { width: 10vw; }
-		#similar-items-table table tr td img { height: auto; width: 10vw; }
+		#similar-items-table table tr td img { width: auto; height: 150px; }
 		#similar-items-table table tr td a { text-decoration: none; color: black; }
 		#similar-items-table table tr td a:hover { color: grey; }
 	</style>
@@ -74,8 +74,8 @@
             var h = Math.max(iframe.contentWindow.document.body.scrollHeight, iframe.contentWindow.document.body.offsetHeight);
             var w = Math.max(iframe.contentWindow.document.body.scrollWidth, iframe.contentWindow.document.body.offsetWidth);
             
-            iframe.style.height = (h+30) + "px";
-            iframe.style.width = w + "px";
+            iframe.style.height = (h+17) + "px";
+            iframe.style.width = (w+17) + "px";
         }
 
 		function OnItemClick(itemIndex)
