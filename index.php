@@ -71,11 +71,11 @@
         {
             if (iframe == null) { return; }
 
-            var h = Math.max(iframe.contentWindow.document.body.scrollHeight, iframe.contentWindow.document.body.offsetHeight);
-            var w = Math.max(iframe.contentWindow.document.body.scrollWidth, iframe.contentWindow.document.body.offsetWidth);
+            iframe.style.width =  "1000px";
             
-            iframe.style.height = (h+17) + "px";
-            iframe.style.width = (w+17) + "px";
+            var h = Math.max(iframe.contentWindow.document.body.scrollHeight, iframe.contentWindow.document.body.offsetHeight);
+            
+            iframe.style.height = (h+30) + "px";
         }
 
 		function OnItemClick(itemIndex)
@@ -495,11 +495,11 @@
             html_text += "<div id=\"seller-message-html\" style=\"display: none;\">";
             if ("Description" in itemJSON.Item && itemJSON.Item.Description.length > 0)
             {
-                html_text += "<iframe id='seller-frame' scrolling='no' srcdoc='" + json.Item.Description + "'></iframe>";
+                html_text += "<iframe id='seller-frame' scrolling='no' srcdoc='" + json.Item.Description.replace(/'/g, "\"") + "'></iframe>";
             }
             else
             {
-                html_text += "<iframe id='seller-frame' scrolling='no' srcdoc='<div style=\"margin: auto; text-align: center; width: 1000px; background-color: #DDDDDD;\"><h2>No seller message found</h2></div>'></iframe>";
+                html_text += "<iframe id='seller-frame' scrolling='no' srcdoc='<div style=\"margin: auto; text-align: center; width: 1000px; background-color: #DDDDDD;\" sandbox><h2>No seller message found</h2></div>'></iframe>";
             }
             
             html_text += "</div>";
