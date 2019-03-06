@@ -13,7 +13,7 @@
 		#product-search .nearby-search { margin-left: 20px; }
 		#product-search .buttons { padding: 0; margin: 0; margin-bottom: 25px; justify-content: center; }
 		#product-search .buttons input {width: 65px; height: 25px; }
-		#results-table {padding: 0; margin: 0 auto; width: 1000px; }
+		#results-table {padding: auto; width: 1000px; margin: auto;}
 		#results-table table, #results-table table td, #results-table table th {border: 1px solid grey; border-collapse: collapse; }
 		#results-table table tr td img { width: 65px; }
 		#results-table table tr td a { text-decoration: none; color: black; }
@@ -347,7 +347,7 @@
 			{
 				text = buildResultsPage(json);
 
-				if (text == "Zipcode is invalid" || text == "No records have been found") 
+				if (text == "Zipcode is invalid" || text == "No records have been found" || text == "Keyword is too short") 
 				{
 					document.getElementById("error-bar").innerHTML = text;
 					document.getElementById("error-bar").style.visibility = "visible";
@@ -371,13 +371,16 @@
                 document.getElementById("item-table").innerHTML = text;
 			}
 		}
-
 		function buildResultsPage(json)
 		{
-			if (json.findItemsAdvancedResponse[0].ack[0] == "Failure")
+			if (json.findItemsAdvancedResponse[0].ack[0] == "Failure" && json.findItemsAdvancedResponse[0].errorMessage[0].error[0].errorId[0] == "18")
 			{
 				return "Zipcode is invalid";
 			}
+            else if (json.findItemsAdvancedResponse[0].ack[0] == "Failure" && json.findItemsAdvancedResponse[0].errorMessage[0].error[0].errorId[0] == "36")
+            {
+                return "Keyword is too short";
+            }
 			else if (!("item" in json.findItemsAdvancedResponse[0].searchResult[0]))
 			{
 				return "No records have been found";
@@ -422,7 +425,7 @@
 
 			if (similarItems.length == 0)
 			{
-				return "<h2 style=\"border: 1px solid black; width: 800px; margin: auto;\">No similar items found</h2>";
+				return "<table><tr><td><h2 style=\"border: 1px solid black; width: 600px; margin: auto;\">No similar items found</h2></td></tr></table>";
 			}
 
 			var html_text = "<table><tr>";
@@ -459,19 +462,19 @@
 
 			var html_text = "<h1><i>Item Details</i></h1><table>";
 
-            if ("PictureURL" in itemJSON.Item) { html_text += "<tr><td><b>Photo</b></td><td><img src=\"" + itemJSON.Item.PictureURL[0] + "\"></td></tr>"; }
+            if ("PictureURL" in itemJSON.Item && itemJSON.Item.PictureURL != "") { html_text += "<tr><td><b>Photo</b></td><td><img src=\"" + itemJSON.Item.PictureURL[0] + "\"></td></tr>"; }
             
-            if ("Title" in itemJSON.Item) { html_text += "<tr><td><b>Title</b></td><td>" + itemJSON.Item.Title + "</td></tr>"; }
+            if ("Title" in itemJSON.Item && itemJSON.Item.Title != "") { html_text += "<tr><td><b>Title</b></td><td>" + itemJSON.Item.Title + "</td></tr>"; }
             
-            if ("Subtitle" in itemJSON.Item) { html_text += "<tr><td><b>Subtitle</b></td><td>" + itemJSON.Item.Subtitle + "</td></tr>"; }
+            if ("Subtitle" in itemJSON.Item && itemJSON.Item.Subtitle != "") { html_text += "<tr><td><b>Subtitle</b></td><td>" + itemJSON.Item.Subtitle + "</td></tr>"; }
             
-            if ("CurrentPrice" in itemJSON.Item) { html_text += "<tr><td><b>Price</b></td><td>" + Number(itemJSON.Item.CurrentPrice.Value).toFixed(2) + " " + itemJSON.Item.CurrentPrice.CurrencyID + "</td></tr>"; }
+            if ("CurrentPrice" in itemJSON.Item && itemJSON.Item.CurrentPrice != "") { html_text += "<tr><td><b>Price</b></td><td>" + Number(itemJSON.Item.CurrentPrice.Value).toFixed(2) + " " + itemJSON.Item.CurrentPrice.CurrencyID + "</td></tr>"; }
             
-            if ("Location" in itemJSON.Item) { html_text += "<tr><td><b>Location</b></td><td>" + itemJSON.Item.Location; if ("PostalCode" in itemJSON.Item) { html_text += ", " + itemJSON.Item.PostalCode; } html_text += "</td></tr>"; }
+            if ("Location" in itemJSON.Item && itemJSON.Item.Location != "") { html_text += "<tr><td><b>Location</b></td><td>" + itemJSON.Item.Location; if ("PostalCode" in itemJSON.Item && itemJSON.Item.PostalCode != "") { html_text += ", " + itemJSON.Item.PostalCode; } html_text += "</td></tr>"; }
             
-            if ("Seller" in itemJSON.Item && "UserID" in itemJSON.Item.Seller) { html_text += "<tr><td><b>Seller</b></td><td>" + itemJSON.Item.Seller.UserID + "</td></tr>"; }
+            if ("Seller" in itemJSON.Item && "UserID" in itemJSON.Item.Seller && itemJSON.Item.UserID != "") { html_text += "<tr><td><b>Seller</b></td><td>" + itemJSON.Item.Seller.UserID + "</td></tr>"; }
             
-            if ("ReturnPolicy" in itemJSON.Item && "ReturnsAccepted" in itemJSON.Item.ReturnPolicy) 
+            if ("ReturnPolicy" in itemJSON.Item && "ReturnsAccepted" in itemJSON.Item.ReturnPolicy && itemJSON.Item.ReturnsAccepted != "") 
             { 
                 html_text += "<tr><td><b>Return Policy (US)</b></td><td>" +  ((itemJSON.Item.ReturnPolicy.ReturnsAccepted == "ReturnsNotAccepted") ? "Returns not accepted" : "Returns accepted" + ("ReturnsWithin" in itemJSON.Item.ReturnPolicy ? " within " + itemJSON.Item.ReturnPolicy.ReturnsWithin.toLowerCase() : ""));
                 
